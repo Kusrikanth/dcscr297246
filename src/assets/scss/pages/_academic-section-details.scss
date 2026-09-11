@@ -1,0 +1,31 @@
+.academic_section_details_wrapper {
+  .section_content_wrapper {
+    @media (max-width: 575.98px) {
+      flex-flow: column;
+    }
+  }
+  .class_details_wraper {
+    position: relative;
+    padding-right: 30px;
+
+    &::after {
+      position: absolute;
+      content: "";
+      right: 0;
+      height: 50%;
+      width: 5px;
+      background-color: grey;
+      border-radius: 10px;
+
+      @media (max-width: 767.98px) {
+        display: none;
+      }
+    }
+    @media (max-width: 767.98px) {
+      margin-bottom: 30px;
+    }
+  }
+  .section_name_wrapper {
+    padding-left: 30px;
+  }
+}

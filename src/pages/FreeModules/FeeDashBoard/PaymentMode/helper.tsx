@@ -1,0 +1,17 @@
+export const colorsList = [
+    "#405189D9",
+    "#0AB39CD9",
+    "#F7B84BD9",
+    "#F06548D9",
+    "#E195AB",
+    "#299CDBD9",
+    "#5A6BA5D9",
+    "#13C4DED9",
+    "#FACD76D9",
+    "#F27E6AD9",
+    "#383E47D9",
+    "#3CB0EAD9",
+    "#6C757DD9",
+    "#85E0FFD9",
+    "#F9A8B7D9",  
+];

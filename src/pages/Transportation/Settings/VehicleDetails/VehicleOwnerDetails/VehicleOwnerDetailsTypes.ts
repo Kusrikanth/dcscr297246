@@ -1,0 +1,37 @@
+export interface VehicleOwnerDetailsType {
+  MeasuringUnit: string;
+  Mileage: string;
+  tankCapacity: string;
+  bodyType: string;
+  enginetankCapacityNo: string;
+  purchaseCost: number;
+  wheelBase: string;
+  groundClearance: string;
+  gcWeight: number;
+  busLength: number;
+  Weight: number;
+  busWidth: number;
+  engineNo: string;
+  fuelType: string;
+  chassisNo: string;
+  typeofBody: string;
+  vehicleType: string;
+  mainEngineBatteries: string;
+  invoicePrice: string;
+  acUnitBatteries: string;
+  onRoadPrice: string;
+  odometerReading: string;
+  ownerName: string;
+  ownerAddress: string;
+  registeredCity: string;
+  vehicleCapacity: string;
+  permitNo: string;
+  permitCharges: string;
+  permitDate: string;
+  permitExpiryDate: string;
+  permitArea: string;
+  hpaWith: string;
+  challanNo: string;
+  challanCharges: string;
+  challanPaidDate: string;
+}

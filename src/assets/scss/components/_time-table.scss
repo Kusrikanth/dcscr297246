@@ -1,0 +1,80 @@
+.time-table-grid-container {
+  .time-table-grid {
+    display: grid;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 4px;
+
+    .grid-item {
+      height: 76px;
+      width: 155px;
+      position: relative;
+      .hover-add-icon {
+        width: 36px;
+        height: 36px;
+        background-color: #fcfcfc;
+        border-radius: 50%;
+        transform: scale(0.8);
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+      }
+
+      .hover-edit-icon {
+        width: 22px;
+        height: 22px;
+        background-color: #fcfcfc;
+        border-radius: 50%;
+        cursor: pointer;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-25%, -25%) scale(0.8);
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out,
+          visibility 0.2s;
+      }
+      .hover-delete-icon {
+        width: 22px;
+        height: 22px;
+        background-color: #fcfcfc;
+        border-radius: 50%;
+        cursor: pointer;
+        position: absolute;
+        bottom: 25px;
+        right: 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-25%, -25%) scale(0.8);
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out,
+          visibility 0.2s;
+      }
+
+      &:hover {
+        .hover-edit-icon {
+          opacity: 1;
+          visibility: visible;
+          transform: translate(-25%, -25%) scale(1);
+        }
+
+        .hover-delete-icon {
+          opacity: 1;
+          visibility: visible;
+          transform: translate(-25%, -25%) scale(1);
+        }
+      }
+    }
+
+    .grid-item:last-child {
+      margin-bottom: 1rem !important;
+    }
+  }
+}
+
+.time-table-settigns {
+  .assign-period-wise-subject {
+    .subjects-list {
+      height: 418px;
+      overflow-y: auto;
+    }
+  }
+}

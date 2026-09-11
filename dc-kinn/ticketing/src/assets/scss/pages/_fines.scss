@@ -1,0 +1,12 @@
+.finemodal-wapper {
+  .fineday-box {
+    display: flex;
+    align-items: center;
+    position: relative;
+    .icon-class {
+      position: absolute;
+      bottom: 4px;
+      left: 9px;
+    }
+  }
+}

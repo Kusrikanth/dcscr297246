@@ -1,0 +1,108 @@
+// Variables for colors and spacing
+$completed-color: #e0f7f4;
+$active-color: #0AB39C;
+$text-color: #999;
+$background-color: #e5e5e5;
+$padding: 1rem;
+$font-size: 0.875rem;
+$margin-right: -10px;
+$background-color-1:#DEF1FC;
+$background-color-2:#D2F1ED;
+
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    flex-wrap: wrap; 
+    justify-content: center;
+  justify-self: center;    
+    .step {
+      flex: 1;
+      margin-bottom: 10px;
+      padding: $padding $padding;
+      font-size: $font-size; 
+      text-transform: capitalize;
+      text-align: center; 
+      color: $text-color;
+      background-color: $background-color;
+      clip-path: polygon(75% 0%, 90% 50%, 75% 100%, 0% 100%, 10% 50%, 0% 0%);
+      z-index: 1;
+      transition: background-color 0.3s ease, color 0.3s ease;
+  
+      &:first-child {
+        margin-left: 0;
+        clip-path: polygon(75% 0%, 90% 50%, 75% 100%, 0% 100%, 0 48%, 0% 0%);
+      }
+  
+      &:last-child {
+        margin-right: 0;
+        clip-path: polygon(75% 0%, 90% 50%, 75% 100%, 0% 100%, 10% 50%, 0% 0%);
+      }
+  
+      &.completed {
+        background-color: $completed-color;
+        color: $active-color;
+
+      }
+  
+      &.active {
+        background-color: $active-color;
+        color: white;
+      }
+    }
+  }
+
+  .filter-container {
+    position: absolute;
+    top: -10px;
+    padding: 0px 10px;
+    color: #495057;
+    background-color: white;
+    
+  }
+
+  .custom-offcanvas-width {
+    width: 50%; 
+  }
+  
+  .bg-more-soft-info{
+    background-color: #D8EDF9;
+  }
+  .bg-more-soft-warning{
+    background-color: #FDF6DF;
+  }
+  .container {
+    max-width: 100%;
+    .info-item {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 10px;
+      .value {
+        font-weight: bold;
+        color: #12344D; 
+        white-space: nowrap;
+      }
+    }
+  }
+  
+  .row {
+    margin-bottom: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .progress-bar-container {
+      .step {
+        flex: 1 1 100%; 
+        padding: $padding * 0.75;
+        font-size: $font-size * 0.75; 
+      }
+  
+      flex-direction: column; 
+      align-items: stretch;
+    }
+    .custom-offcanvas-width{
+      width: 90%;
+    }
+  }
+  

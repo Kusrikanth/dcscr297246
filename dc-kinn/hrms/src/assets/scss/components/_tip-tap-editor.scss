@@ -1,0 +1,148 @@
+/* TipTap editor wrapper */
+.tiptap-editor {
+  // padding: 1rem;
+  background-color: #ffffff;
+  /* white */
+  color: #000000;
+  /* black */
+  border-radius: 8px;
+}
+
+/* AddEditHtmlModal specific styling */
+.add-edit-html-modal .tiptap-editor .ProseMirror {
+  min-height: 500px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* ProseMirror content area */
+.tiptap-editor .ProseMirror {
+  background-color: #ffffff;
+  /* white background */
+  color: #000000;
+  /* black text */
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  // min-height: 200px;
+  font-size: 1rem !important;
+  line-height: 1.5;
+}
+
+/* Math node base style */
+.tiptap-editor .tiptap-math.latex,
+.tiptap-editor .ProseMirror-selectednode {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+/* Math node when selected */
+.tiptap-editor .tiptap-math.latex.ProseMirror-selectednode,
+.tiptap-editor .ProseMirror-selectednode {
+  outline: 2px solid #2196f3;
+  /* blue highlight */
+  background-color: rgba(33, 150, 243, 0.1);
+  box-shadow: 0 0 4px rgba(33, 150, 243, 0.3);
+}
+
+/* Optional: math result */
+.tiptap-editor .tiptap-math.result {
+  background-color: rgba(120, 230, 86, 0.1);
+  border-bottom: 2px solid #44c244;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* Make KaTeX readable */
+.tiptap-editor .katex {
+  font-size: 1.1rem;
+  color: #000000;
+  /* ensure KaTeX renders in black */
+}
+
+/* Prevent KaTeX HTML fallback from interfering */
+.tiptap-editor .katex-html {
+  pointer-events: none;
+}
+
+.tiptap-editor {
+  :first-child {
+    margin-top: 0;
+  }
+
+  /* Table-specific styling */
+  table {
+    border-collapse: separate !important;
+    // border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    margin: 0;
+    overflow: hidden;
+    table-layout: fixed;
+    width: 100%;
+
+    td,
+    th {
+      border: 1px solid #ccc;
+      border-collapse: separate !important;
+      // border-collapse: collapse !important;
+      box-sizing: border-box;
+      min-width: 1em;
+      padding: 6px 8px;
+      position: relative;
+      vertical-align: top;
+
+      >* {
+        margin-bottom: 0;
+      }
+    }
+
+    td[data-border-color],
+    th[data-border-color] {
+      border-top: 1px solid var(--border-color) !important;
+      border-right: 1px solid var(--border-color) !important;
+      border-bottom: 1px solid var(--border-color) !important;
+      border-left: 1px solid var(--border-color) !important;
+    }
+
+    th {
+      background-color: #f7f7f7;
+      font-weight: bold;
+      text-align: left;
+    }
+
+    .selectedCell:after {
+      background: #e0e0e0a2;
+      content: "";
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      pointer-events: none;
+      position: absolute;
+      z-index: 2;
+    }
+
+    .column-resize-handle {
+      background-color: #a259ff;
+      bottom: -2px;
+      pointer-events: none;
+      position: absolute;
+      right: -2px;
+      top: 0;
+      width: 4px;
+    }
+  }
+
+  .tableWrapper {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+
+  &.resize-cursor {
+    cursor: ew-resize;
+    cursor: col-resize;
+  }
+}

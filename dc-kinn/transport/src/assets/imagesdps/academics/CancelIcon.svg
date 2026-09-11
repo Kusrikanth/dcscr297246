@@ -1,0 +1,35 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="104.246"
+  height="104.246"
+  viewBox="0 0 104.246 104.246"
+>
+  <g
+    id="Group_6585"
+    data-name="Group 6585"
+    transform="translate(-959.875 -203.148)"
+  >
+    <path
+      id="Icon_metro-cancel"
+      data-name="Icon metro-cancel"
+      d="M54.693,1.928a52.123,52.123,0,1,0,52.123,52.123A52.123,52.123,0,0,0,54.693,1.928Zm0,94.473a42.35,42.35,0,1,1,42.35-42.35A42.35,42.35,0,0,1,54.693,96.4ZM70.982,80.112l9.773-9.773Z"
+      transform="translate(957.304 201.22)"
+      fill="#f06548"
+    />
+    <text
+      id="_"
+      data-name="!"
+      transform="translate(1003.998 281)"
+      fill="#f06548"
+      stroke="rgba(0,0,0,0)"
+      strokeWidth="1"
+      fontSize="66"
+      fontFamily="Roboto-Bold, Roboto"
+      fontWeight="700"
+    >
+      <tspan x="0" y="0">
+        !
+      </tspan>
+    </text>
+  </g>
+</svg>

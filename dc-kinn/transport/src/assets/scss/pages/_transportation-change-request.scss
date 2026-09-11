@@ -1,0 +1,20 @@
+.transportation_change_request_wrap {
+  .stud_info_heading {
+    color: #9599ad;
+  }
+
+  .edit_email_icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 26px;
+    height: 26px;
+    border-radius: 50px;
+    background-color: white;
+    box-shadow: 0px 3px 6px #00000029;
+
+    i {
+      color: #405189;
+    }
+  }
+}

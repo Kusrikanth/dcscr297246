@@ -1,0 +1,104 @@
+.modules-container {
+    display: grid;
+
+    gap: 0px;
+    width: 100%;
+
+    &.feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    &.permission-grid {
+        grid-template-columns: 100px 1fr 100px 100px 100px;
+    }
+
+    .custom-row {
+        display: contents;
+
+        &:hover {
+            >.custom-column {
+                background-color: #f3f6f9;
+
+                .feature-column {
+                    .feature-actions {
+                        display: flex;
+                    }
+                }
+            }
+
+        }
+
+        &.header {
+            .custom-column {
+                background-color: #F5F6F9;
+                color: #405189;
+                font-weight: 700;
+                padding: 0.575rem 0.6rem;
+
+            }
+        }
+
+        .custom-column {
+            padding: 0.5rem 0.6rem;
+            border-right: 1px solid #E9EBEC;
+            border-bottom: 1px solid #E9EBEC;
+
+            &:last-child {
+                border-right: none;
+            }
+
+            &:first-child {
+                padding-left: 1rem;
+            }
+
+            .arrow-icon {
+                margin-right: 2px;
+                margin-left: -2px;
+                font-size: 1.25rem;
+                line-height: 1.25rem;
+
+                &.openmenu {
+                    transform: rotate(90deg);
+                }
+
+                &.closemenu {
+                    transform: rotate(0deg);
+                }
+            }
+
+
+            .feature-column {
+                display: flex;
+                align-items: center;
+
+                .feature-actions {
+                    display: none;
+                    gap: 0.1375rem;
+                    align-items: center;
+                    font-size: 1.125rem;
+                    line-height: 1.125rem;
+
+                    .featurebtn {
+                        display: flex;
+                        align-items: center;
+                        padding: 0;
+                        border: 0;
+                        outline: 0;
+                        background-color: transparent;
+                    }
+                }
+            }
+
+
+        }
+    }
+
+    .custom-row:last-of-type .custom-column {
+        border-bottom: none;
+    }
+
+    .d-contents {
+        display: contents;
+    }
+
+}

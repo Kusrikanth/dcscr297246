@@ -1,0 +1,25 @@
+.tution_fee_concession_wrap {
+  .choose_file_botton {
+    // background-color: #f3f6f9;
+    // color: #9599ad;
+    padding: 7px 22px;
+    border-radius: 5px;
+    margin-right: 20px;
+    margin-bottom: 0;
+    color: #000000;
+    background-color:#ffffff;
+
+      white-space: nowrap;
+
+    &:hover {
+      background-color: #f3f6f9 !important;
+    }
+  }
+
+  .file_name_wrap {
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

@@ -1,0 +1,193 @@
+.updated_dashboard_wrapper {
+    .common_card_wrapper {
+        .progress_bar_wrap {
+            border-radius: 25px;
+            height: 0.57rem;
+        }
+
+        .image_wrap img {
+            object-fit: cover;
+        }
+    }
+
+    
+    .failures_analysis_wrap, .class_wise_highMarks_wrapper {
+       min-height: 369px;
+    }
+
+    .department_summary_wrapper, .salary_distribution_wrap, .today_absentee_wrap {
+        min-height: 468px;
+    }
+
+    .salary_distribution_wrap { 
+        .salary_distribution_progress {
+            height: 20px;
+            border-radius: 0;
+        }
+
+        .color_box_warp {
+            padding-top: 50px;
+
+            .color_box {
+                height: 12px;
+                width: 12px;
+                border-radius: 2px;
+            }
+        }
+
+    }
+    .today_absentee_wrap {
+        .outline_button {
+            border-radius: 25px;
+            height: 26px;
+            width: 5.625rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+
+    .fee_collection_analysis_wrap, .fee_revenue_summary_wrapper, .fee_revenue_summaryyy_wrapper {
+        min-height: 463px;
+    }
+
+    // super admin dashboard
+    .branch-wise-unpaid-list {
+        .branch-wise-unpaid-table {
+        }
+    }
+
+    .fee-summary-table-tabs-container {
+        .table-sticky {
+            height: 408px;
+            thead {
+                position: sticky;
+                top: 0;
+                z-index: 1;
+            }
+            tfoot {
+                position: sticky;
+                bottom: -2px;
+                z-index: 1;
+            }
+        }
+    }
+
+    .admission-summary-graph {
+        .apexcharts-datalabel {
+            transform: translateX(4px);
+        }
+    }
+
+    .class-wise-admission-analysis-container {
+        .class-wise-admissions-analysis-table-container {
+            .class-wise-admissions-analysis-table {
+                height: 362px;
+                overflow-y: scroll;
+            }
+        }
+    }
+    .admissions-container {
+        .branch-wise-drill-down-table-container {
+            .branch-wise-drill-down-table {
+                max-height: 268px;
+            }
+        }
+    }
+
+    .super-admin-transport-dashboard-container {
+        .vehicle-category-table-view {
+            height: 482px;
+        }
+    }
+
+    .route-occupancy-summary-container {
+        z-index: 1;
+        height: 508px;
+        overflow-y: auto;
+    }
+
+    .super-admin-examination-dashboard-container{
+        .marks-range-table-container, 
+        .marks-analysis-table-container,
+        .grade-wise-analysis-table-container
+        {
+            height: 368px;
+        }
+    }
+}
+
+.table-sticky {
+    thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+}
+
+
+.super-admin-helpdesk-container {
+    .super-admin-stats {
+        .super-admin-stats-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+
+            .status-icon-container {
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px;
+                color: white;
+                flex-shrink: 0;
+                position: relative;
+
+                .status-icon {
+                    position: absolute;
+                    background-color: red;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    transform: translate(32%, -32%);
+                    border: 2px solid #fff;
+                }
+
+                &.diamond {
+                    transform: rotate(45deg);
+                    position: relative;
+
+                    .icon {
+                        transform: rotate(-45deg); 
+                    }
+                }
+            }
+
+            // .status-text {
+            // display: flex;
+            // flex-direction: column;
+            // justify-content: center;
+
+            // .status-count {
+            //     font-size: 20px;
+            //     font-weight: bold;
+            //     color: white;
+            // }
+
+            // .status-label {
+            //     font-size: 14px;
+            //     color: #b0b0b0;
+            // }
+            // }
+        }
+    }
+}
+
+

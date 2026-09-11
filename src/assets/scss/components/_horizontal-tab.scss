@@ -1,0 +1,46 @@
+.horizontal_tab_wrapper {
+  @media (max-width: 991.98px) {
+    flex-flow: column;
+  }
+
+  .tab_name_wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 42px;
+    // padding: 0px 26px;
+    border-bottom: 1px solid #dee2e6;
+
+    &.active {
+      color: #198754;
+      border-bottom: 2px solid #198754;
+      font-weight: bold;
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 991.98px) {
+      padding: 10px 0px;
+      width: 100%;
+      text-align: center;
+    }
+  }
+
+  .button {
+    border: none;
+    margin: 0px 5px;
+  }
+
+  .button-success {
+    background-color: #0ab39c19;
+    color: #0ab39c;
+  }
+
+  .button-error {
+    background-color: #fef0ed;
+    color: #f06548;
+  }
+}

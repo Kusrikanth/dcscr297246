@@ -1,0 +1,181 @@
+// .auto-search-input-container {
+//     display: flex;
+//     position: relative;
+// }
+
+.searchinput-container {
+    min-width: 14rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+
+    .searchinput-content {
+        display: flex;
+        border: 1px solid var(--vz-input-border);
+        font-size: .875rem;
+        border-radius: 0.25rem;
+
+        &:focus-within {
+            border-color: var(--vz-input-focus-border);
+        }
+
+        .floating-label {
+            position: absolute;
+            margin-left: 0.5px;
+            padding: 0 0.375rem;
+            top: -0.475rem;
+            color: #878a99;
+            font-size: 12px;
+            background-color: white;
+            left: 0.5rem;
+            z-index: 2;
+            line-height: 1;
+        }
+    }
+
+    .buttonwrapper {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        outline: none;
+        border: 0;
+        border-right: 1px solid var(--vz-input-border);
+        background-color: transparent;
+        padding: .4065rem 0.5rem 0.4065rem .75rem;
+        max-width: 130px;
+        width: 130px;
+        overflow: hidden;
+        // font-weight: 500;
+        overflow: hidden;
+        background-color: #eff2f7;
+        border-top-left-radius: 0.25rem;
+        border-bottom-left-radius: 0.25rem;
+
+        .btntext {
+            white-space: nowrap;
+            flex-grow: 1;
+            text-overflow: ellipsis;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        &.invalid {
+            border-color: #FF0022 !important;
+        }
+    }
+
+    .searchwrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        flex-grow: 1;
+        padding: .4065rem 0.9rem 0.4065rem .5rem;
+
+        .search-input {
+            border: 0;
+            outline: 0;
+            flex-grow: 1;
+            width: 100%;
+        }
+    }
+
+}
+
+.searchinput-options {
+    position: absolute;
+    z-index: 10;
+
+    .dropdown-content {
+        width: 100%;
+        overflow-y: auto;
+
+        will-change: opacity, transform;
+        // transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+
+        &.open {
+            animation: dropdown-open 0.2s ease-out forwards;
+        }
+
+        &.close {
+            animation: dropdown-close 0.15s ease-in forwards;
+        }
+    }
+
+    .dropdown-list {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        background-color: #ffffff;
+        min-width: 100%;
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid $input-border-color;
+        box-shadow: $box-shadow;
+        background-color: $dropdown-bg;
+        z-index: $zindex-modal + 1;
+        border-radius: 8px;
+        overflow-x: hidden;
+        border-top-left-radius: 0px;
+        border-top-right-radius: 0px;
+
+        li {
+            cursor: pointer;
+            display: flex;
+            width: 100%;
+            border-bottom: 1px solid #e9ebec;
+            padding: .475rem .75rem;
+            gap: 0.5rem;
+
+            &:hover,
+            &:focus {
+                background-color: $dropdown-link-hover-bg;
+            }
+
+            &.selected {
+                background-color: $dropdown-link-hover-bg;
+            }
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
+    }
+
+    .no-result {
+        padding: 0.75rem 0;
+        color: #A3A3A3;
+        text-align: center;
+    }
+
+    .error-message {
+        margin-top: 0.125rem;
+        font-size: 0.875rem;
+        color: #FF0022;
+    }
+}
+
+
+@keyframes dropdown-open {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes dropdown-close {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(-5px);
+    }
+}

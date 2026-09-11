@@ -1,0 +1,50 @@
+     <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="23"
+        viewBox="0 0 16 23"
+      >
+        <g
+          id="Group_6584"
+          data-name="Group 6584"
+          transform="translate(-1635 -404)"
+        >
+          <g
+            id="Component_3_16"
+            data-name="Component 3 – 16"
+            transform="translate(1635 408)"
+          >
+            <g
+              id="Rectangle_26"
+              data-name="Rectangle 26"
+              fill="#fff"
+              stroke="#707070"
+              strokeWidth="1"
+            >
+              <rect width="16" height="16" rx="4" stroke="none" />
+              <rect
+                x="0.5"
+                y="0.5"
+                width="15"
+                height="15"
+                rx="3.5"
+                fill="none"
+              />
+            </g>
+          </g>
+          <text
+            id="_"
+            data-name="+"
+            transform="translate(1638 422)"
+            fill="#707070"
+            fontSize="17"
+            fontFamily="Roboto-Regular, Roboto"
+          >
+            <tspan x="0" y="0">
+              +
+            </tspan>
+          </text>
+        </g>
+      </svg>
+
+

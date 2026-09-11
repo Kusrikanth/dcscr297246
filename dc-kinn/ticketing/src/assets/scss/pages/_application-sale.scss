@@ -1,0 +1,79 @@
+.application-sale-btn{
+    @media (max-width: 532px) {
+        .btn-3{
+            margin-top:10px;
+        }
+      }
+    @media (max-width: 408px) {
+        .btn-2{
+            margin-top:10px;
+        }
+      }
+}
+
+.status-card-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -8px;
+    margin-right: -8px;
+  
+    .card-container {
+      width: calc(100% / 5);
+      padding: 0 8px;
+      margin-bottom: 0.5rem;
+    }
+  
+    @media only screen and (min-width: 1690px) {
+      .card-container {
+        width: calc(100% / 5);
+      }
+    }
+  
+    @media only screen and (max-width: 1200px) {
+      .card-container {
+        width: calc(100% / 3);
+      }
+    }
+  
+    @media only screen and (max-width: 768px) {
+      .card-container {
+        width: calc(100% / 3);
+      }
+    }
+  
+    @media only screen and (max-width: 576px) {
+      .card-container {
+        width: calc(100% / 2);
+      }
+    }
+  }
+
+.bulk-upload-repair-container {
+  .status-card-container {
+    .icon-container {
+      width: 3.2rem;
+      height: 3.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+.bulk-upload-import-container {
+  .bulk-upload-import-stats-list {
+    .icon-container {
+      width: 3.2rem;
+      height: 3.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+.react-pdf-spacing {
+  .react-pdf__Page__canvas {
+    width: 800px !important;
+  }
+}

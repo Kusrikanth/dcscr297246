@@ -1,0 +1,36 @@
+export interface IStudentManagementState {
+    getStudentAttendanceResp: any;
+    studentsStatsResp: any;
+    studentsListResp: any;
+    studentsIdsListResp: any;
+    addStudentResp: any;
+    updateStudentResp: any;
+    affectedSection: any;
+    getStudentByIdResp: any;
+    getSiblingDetailsResp: any;
+    downDocumentByIdResp: any;
+    deleteStudentResp: any;
+    uploadStudentDocumentResp: any;
+    classWiseDocumentListResp: any;
+    getStudentsByFilterResp: any;
+    studentManagementErrorResp: any;
+    pastEducationClass: any;
+    permanentAddressStateResp: any;
+    permanentAddressCityResp: any;
+    exportStudentDataResp: any;
+    exportStudentDataRegistrationResp: any;
+    studentFatherEmployeeDetailsResp: any;
+    studentMotherEmployeeDetailsResp: any;
+    allParentsListResp: any;
+    parentDetailsByIdResp: any;
+    parentsStatsResp: any;
+    updatePrimaryContactResp: any;
+    studentListByRegNo: any;
+    exportParentListResp: any;
+    studentDetailsByRegNo: any;
+    parentChildrensResp: any;
+    sendCredentialsParentResp: any;
+    updateStudentDetailsResp: any;
+    updateWhatsappnoResp: any;
+    deleteDocByIdResp : any;
+}

@@ -1,0 +1,372 @@
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useFormik } from "formik";
+import {
+  CreateStudentAccModalType,
+  ManageStudentFilterProps,
+  UserDetailsProps,
+} from "../ManageUserTypes";
+import { ModalContainerUpdated, SelectInput, TextInput } from "../../../../Components/Common";
+import {
+  generateColumns,
+} from "./helper";
+import TableContainer from "../../../../Components/Common/TableContainer";
+import { useHistory } from "react-router-dom";
+import { shallowEqual, useDispatch } from "react-redux";
+import { useAppSelector } from "../../../../hooks/storehook";
+import { toast } from "react-toastify";
+
+//Common Component
+import { ConfirmationModal, TextIconInput, ModalContainer } from "../../../../Components/Common";
+
+//ModalContainer
+import CreateStudentAccModal from "./CreateStudentAccModal";
+//Action Generator
+import { generateActionPayload } from "../../../../utility/reduxutility";
+import { getRoleTypeUsersAct, deleteRoleTypeUserAct } from "../../../../store/usermanagement/usermanagementactions";
+import { setLoginActivityForUserDetailsAct } from "../../../../store/appdata/appdataactions";
+
+//Constants
+import { roleTypes } from "../../../../Components/constants/common";
+
+//Action Modals
+import ChangePassword from "../ActionModals/ChangePassword";
+import DeactivateAccount from "../ActionModals/DeactivateAccount";
+//Common Utility
+import { getSortingKeys } from "../../../../utility/commonutility";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Delete02StrokeStandard, ResetPasswordStrokeStandard, ShieldUserStrokeStandard, UserLock01StrokeStandard, UserUnlock01StrokeStandard } from "@hugeicons-pro/core-stroke-standard";
+import { IPaginationState } from "../../../../Components/Common/Pagination";
+
+const initialValues: UserDetailsProps = {
+  search: ""
+};
+
+const Students = ({ instituteId, branchId, showCreateUserModal, closeModalHndlr }: any) => {
+  const [studentFilterState, setStudentFilterState] =
+    useState<any>({ searchString: "" });
+  const [createStudentModalState, setCreateStuentModalState] = useState<any>({
+    showModal: false,
+    modalData: undefined,
+  });
+  const [delUserModalState, setDelUserModalState] = useState<any>({
+    showModal: false,
+    userId: ""
+  });
+  const [changePwdModalState, setChangePwdModalState] = useState({
+    showModal: false,
+    userIds: undefined
+  });
+  const [deactivateModalState, setDeactivateModalState] = useState({
+    showModal: false,
+    userIds: undefined, userEnabled: undefined
+  });
+  const history = useHistory();
+  const dispatch = useDispatch();
+  const paginationDetailRef = useRef({
+    pageNo: 0,
+    pageSize: 10,
+  });
+  const sortingDetailRef = useRef(undefined);
+
+  const { getRoleTypeUsersResp,
+    deleteRoleTypeUserResp, userManagementErrorResp
+  } = useAppSelector(({ userManagement }) => ({
+    getRoleTypeUsersResp: userManagement.getRoleTypeUsersResp,
+    deleteRoleTypeUserResp: userManagement.deleteRoleTypeUserResp,
+    userManagementErrorResp: userManagement.userManagementErrorResp
+  }), shallowEqual);
+
+  const studentRespRef = useRef<any>({
+    prevDeleteRoleTypeUserResp: deleteRoleTypeUserResp,
+    prevUserManagementErrorResp: userManagementErrorResp,
+  });
+
+  useEffect(() => {
+    const { prevDeleteRoleTypeUserResp, prevUserManagementErrorResp } = studentRespRef.current;
+    if (deleteRoleTypeUserResp && prevDeleteRoleTypeUserResp !== deleteRoleTypeUserResp) {
+      setDelUserModalState((prevState: any) => ({ ...prevState, showModal: false }));
+      getStudentsHavingLoginIdApiCall();
+      toast.success("Student user id deleted successfully.")
+    } else if (userManagementErrorResp && userManagementErrorResp !== prevUserManagementErrorResp) {
+      const { details }: any = userManagementErrorResp;
+      toast.error(details);
+    }
+    studentRespRef.current.prevDeleteRoleTypeUserResp = deleteRoleTypeUserResp;
+    studentRespRef.current.prevUserManagementErrorResp = userManagementErrorResp;
+  }, [deleteRoleTypeUserResp, userManagementErrorResp]);
+
+  useEffect(() => {
+    getStudentsHavingLoginIdApiCall();
+  }, [])
+
+  useEffect(() => {
+    if (showCreateUserModal) {
+      setCreateStuentModalState((prevState: any) => ({ ...prevState, showModal: true, modalData: undefined }));
+    }
+  }, [showCreateUserModal]);
+
+  const loginActivitiesHandler = () => {
+    history.push("/user-login-activity");
+  }
+
+
+  //Login Activty Page Redirection
+  function loginActivityHandler(event: any) {
+    const userId = Number(event.currentTarget.getAttribute("data-id")),
+      userDetails = getRoleTypeUsersResp?.data.find((item: any) => item.id === Number(userId)) || {};
+    if (userDetails) {
+      const { id, role } = userDetails, { roleType } = role || {};
+      if (id && roleType) {
+        dispatch(setLoginActivityForUserDetailsAct({ userId: id, roleType }));
+        history.push(`manage-user/login-activity/${userId}`)
+      }
+    }
+  }
+
+  function deleteUserHndlr(event: any) {
+    const userId = event.currentTarget.getAttribute("data-id");
+    if (userId)
+      setDelUserModalState((prevState: any) => ({ ...prevState, showModal: true, userId }));
+  }
+
+  function changePwdHandler(event: any) {
+    const userId = Number(event.currentTarget.getAttribute("data-id"));
+    setChangePwdModalState((prevState: any) => ({
+      ...prevState,
+      showModal: true,
+      userIds: [userId],
+    }))
+  }
+
+  function deactivateHandler(event: any) {
+    const userId = Number(event.currentTarget.getAttribute("data-id")),
+      { enabled } = getRoleTypeUsersResp?.data.find((item: any) => item.id === Number(userId)) || {};
+    if (typeof enabled === "boolean") {
+      setDeactivateModalState((prevState: any) => ({
+        ...prevState, showModal: true, userIds: [userId],
+        userEnabled: enabled
+      }))
+    }
+  }
+
+  const menuOptions = useMemo(
+    () => [
+      {
+        id: "change-password",
+        actionIcon: <HugeiconsIcon
+          icon={ResetPasswordStrokeStandard}
+          className="tw-mr-2 tw-text-gray-500" size={18} />,
+        actionName: "Change Password",
+        onClickHndlr: changePwdHandler
+      },
+      {
+        id: "deactivate-user",
+        actionIcon: <HugeiconsIcon
+          icon={UserLock01StrokeStandard}
+          className="tw-mr-2 tw-text-gray-500" size={18} />,
+        actionName: "Deactivate Account",
+        onClickHndlr: deactivateHandler
+      },
+      {
+        id: "activate-user",
+        actionIcon: <HugeiconsIcon
+          icon={UserLock01StrokeStandard}
+          className=" tw-text-gray-500 tw-mr-2" size={18} />,
+        actionName: "Activate Account",
+        onClickHndlr: deactivateHandler
+      },
+      {
+        id: "login-activities",
+        actionIcon: <HugeiconsIcon
+          icon={ShieldUserStrokeStandard}
+          className=" tw-text-gray-500 align-bottom tw-mr-2" size={18} />,
+        actionName: "Login Activities",
+        onClickHndlr: loginActivityHandler
+      }, {
+        id: "delete",
+        actionIcon: <HugeiconsIcon
+          icon={Delete02StrokeStandard}
+          className="tw-text-red-500 tw-mr-2" size={18} />,
+        actionName: "Delete",
+        onClickHndlr: deleteUserHndlr
+      }
+    ], [getRoleTypeUsersResp]);
+
+  const StudentFilterForm = useFormik({
+    enableReinitialize: true,
+    initialValues: studentFilterState,
+    onSubmit: (values) => { },
+  });
+
+  const toggleCreateStudentHndlr = useCallback((apiCall?: boolean) => {
+    setCreateStuentModalState((prevState: any) => ({ ...prevState, showModal: !prevState.showModal }))
+    if (typeof (apiCall) === "boolean" && apiCall) {
+      getStudentsHavingLoginIdApiCall();
+    }
+    closeModalHndlr();
+  }, [instituteId, getRoleTypeUsersResp]);
+
+
+  function paginationHndlr(paginationInfo: IPaginationState) {
+    paginationDetailRef.current = paginationInfo;
+    getStudentsHavingLoginIdApiCall();
+  }
+
+  //Delete Modal Handlers
+  function delModalCancelHndlr() {
+    setDelUserModalState((prevState: any) => ({ ...prevState, showModal: false, userId: "" }));
+  }
+  function delModalSubmitHndlr() {
+    const { userId } = delUserModalState,
+      params = {
+        userId,
+        roleType: roleTypes.STUDENT
+      };
+    dispatch(deleteRoleTypeUserAct(generateActionPayload("del_role_type_user", params)));
+  }
+  //Delete Modal Handlers
+
+  //Change Password Modal Handlers
+  const toggleChangePwdHandler = useCallback((apiCall?: boolean) => {
+    setChangePwdModalState((prevState: any) => ({ ...prevState, showModal: !prevState.showModal }))
+    if (typeof (apiCall) === "boolean" && apiCall) {
+      getStudentsHavingLoginIdApiCall();
+    }
+  }, [instituteId, getRoleTypeUsersResp]);
+
+
+  //Deactivate User Modal Handlers
+  const toggleDeactivateHandler = useCallback((apiCall?: boolean) => {
+    setDeactivateModalState((prevState: any) => ({ ...prevState, showModal: !prevState.showModal }))
+    if (typeof (apiCall) === "boolean" && apiCall) {
+      getStudentsHavingLoginIdApiCall();
+    }
+  }, [instituteId, getRoleTypeUsersResp]);
+
+  function getStudentsHavingLoginIdApiCall(otherProps?: any) {
+    const { pageNo, pageSize } = paginationDetailRef.current || {};
+    const sortingParams = getSortingKeys(sortingDetailRef.current);
+    const payload = {
+      pageNo: pageNo, ...studentFilterState,
+      ...otherProps, pageSize: pageSize, isPageable: true,
+      ...sortingParams
+    };
+    dispatch(getRoleTypeUsersAct(generateActionPayload("get_role_type_users", { roleType: roleTypes.STUDENT }, payload)));
+  }
+
+  function onChangeFilterHndlr(event: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = event.target;
+    paginationDetailRef.current.pageNo = 0;
+    setStudentFilterState((prevState: any) => ({ ...prevState, [name]: value }));
+    getStudentsHavingLoginIdApiCall({ [name]: value });
+  }
+
+  function sortingHandler(sortingKeys: any) {
+    if (sortingDetailRef.current && sortingDetailRef.current !== sortingKeys) {
+      sortingDetailRef.current = sortingKeys;
+      getStudentsHavingLoginIdApiCall();
+      //Testing
+    } else {
+      sortingDetailRef.current = sortingKeys;
+    }
+  }
+
+  const { data: studentData, totalElements, pageNumber, totalPages } = getRoleTypeUsersResp || {};
+  const roleColumns = useMemo(() => generateColumns(menuOptions), [getRoleTypeUsersResp]);
+  return (
+    <>
+      <div className="tw-w-full">
+        <form onSubmit={StudentFilterForm.handleSubmit} className="tw-px-4 tw-py-4">
+          <div className="tw-grid tw-grid-cols-12 tw-gap-4">
+            <div className="tw-col-span-12 md:tw-col-span-4">
+              <div className="search-box">
+                <TextInput
+                  name="searchString"
+                  value={studentFilterState.searchString}
+                  onChange={onChangeFilterHndlr}
+                  formgroupClassName="tw-mb-0"
+                  placeHolder="Search"
+                  labelText="Search"
+                  floatingLabel
+                />
+                <i className="ri-search-line search-icon"></i>
+              </div>
+            </div>
+          </div>
+        </form>
+        <TableContainer
+          columns={roleColumns || []}
+          data={studentData || []}
+          divClass="tw-overflow-x-auto tw-mb-3"
+          theadClass="tw-bg-gray-100 tw-text-gray-600 tw-align-middle"
+          showPagination={true}
+          totalPages={totalPages}
+          totalRecords={totalElements}
+          callbackPaginationHndlr={paginationHndlr}
+          currentPageNumber={pageNumber}
+          manualSorting={true}
+          sortingHandler={sortingHandler}
+        />
+      </div>
+      <ModalContainerUpdated
+        id="create-user"
+        isOpen={createStudentModalState.showModal}
+        toggle={toggleCreateStudentHndlr}
+        modalTitle="Create User"
+        modalSize="lg"
+      >
+        <CreateStudentAccModal
+          isOpen={createStudentModalState.showModal}
+          toggle={toggleCreateStudentHndlr}
+          modalTitle="Create User"
+          instituteId={instituteId}
+          branchId={branchId}
+          editStudentDetails={createStudentModalState.modalData}
+        />
+      </ModalContainerUpdated>
+
+      <ModalContainerUpdated
+        id="change-newPassword-modal"
+        isOpen={changePwdModalState.showModal}
+        toggle={toggleChangePwdHandler}
+        modalTitle="Change Password"
+        modalSize="md"
+      >
+        <ChangePassword
+          isOpen={changePwdModalState.showModal}
+          toggle={toggleChangePwdHandler}
+          userIds={changePwdModalState.userIds}
+          roleType={roleTypes.STUDENT}
+        />
+      </ModalContainerUpdated>
+
+      <ModalContainerUpdated
+        id="deactivate-modal"
+        isOpen={deactivateModalState.showModal}
+        hideHeader={true}
+        toggle={toggleDeactivateHandler}
+        modalTitle="Change Password"
+        modalSize="md"
+      >
+        <DeactivateAccount
+          isOpen={deactivateModalState.showModal}
+          toggle={toggleDeactivateHandler}
+          userIds={deactivateModalState.userIds}
+          isUserActive={deactivateModalState.userEnabled}
+        />
+      </ModalContainerUpdated>
+
+      <ConfirmationModal
+        id="delete-branch-modal"
+        isOpen={delUserModalState.showModal}
+        confirmMessage="Are you sure you want to delete this login id for student?"
+        cancelHndlr={delModalCancelHndlr}
+        confirmHndlr={delModalSubmitHndlr}
+        showImgIcon={true}
+        iconType="reject"
+      />
+    </>
+  );
+};
+
+export default Students;

@@ -1,0 +1,32 @@
+
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="17"
+        height="20.28"
+        viewBox="0 0 17 20.28"
+      >
+        <g
+          id="Icon_ionic-ios-document"
+          data-name="Icon ionic-ios-document"
+          transform="translate(-6.813 -3.438)"
+        >
+          <path
+            id="Path_3801"
+            data-name="Path 3801"
+            d="M21.6,9.15h4.789a.261.261,0,0,0,.263-.263h0a1.558,1.558,0,0,0-.563-1.205L22.075,4.334a1.69,1.69,0,0,0-1.084-.389h0a.389.389,0,0,0-.389.389V8.15A1,1,0,0,0,21.6,9.15Z"
+            transform="translate(-3.342 -0.002)"
+            fill="none"
+            stroke="#878a99"
+            strokeWidth="1"
+          />
+          <path
+            id="Path_3802"
+            data-name="Path 3802"
+            d="M15.891,7.794V3.938H9A1.623,1.623,0,0,0,7.313,5.48v16.2A1.623,1.623,0,0,0,9,23.218H21.628a1.623,1.623,0,0,0,1.684-1.542V9.963H18.26A2.279,2.279,0,0,1,15.891,7.794Z"
+            fill="none"
+            stroke="#878a99"
+            strokeWidth="1"
+          />
+        </g>
+      </svg>
+    

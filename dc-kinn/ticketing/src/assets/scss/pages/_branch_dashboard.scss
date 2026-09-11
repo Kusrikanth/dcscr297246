@@ -1,0 +1,341 @@
+.branch_dashboard {
+    .card-body {
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    .card-body::-webkit-scrollbar {
+        width: 0;
+    }
+
+    .card-body:focus-within::-webkit-scrollbar,
+    .card-body:hover::-webkit-scrollbar,
+    .card-body:active::-webkit-scrollbar {
+        width: 4px;
+        border-radius: 50px;
+    }
+
+    .card-body::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+    }
+
+    .card-body:hover::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+
+
+}
+
+.upcoming_events {
+    .card_height {
+        height: 415px;
+    }
+    .fs-15 {
+        font-size: 15px !important;
+    }
+    .h-400 {
+        height: 403px;
+    }
+}
+
+.horizontal_tab { 
+    .updated_horizontal_tab_wrapper {
+        background-color: #f6f6f6 !important;
+        border-radius: 20px;
+        color: black !important;
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper {
+        border-bottom: 0px !important;
+        border-radius: 20px;
+        margin: 0.5rem !important;
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
+        box-shadow: none;
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper span {
+        margin: 0px !important;
+    }
+    .updated_horizontal_tab_wrapper .tab_name_wrapper.active {
+        background-color: white !important;
+        color: #6e6e6e !important;
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper.active:first-child {
+        box-shadow: 4px 0px 8px rgba(89, 89, 89, 0.2);
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper.active:last-child {
+        box-shadow: -4px 0px 8px rgba(89, 89, 89, 0.2);
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper.active:not(:first-child):not(:last-child) {
+        box-shadow: -4px 0px 8px rgba(89, 89, 89, 0.2), 4px 0px 8px rgba(89, 89, 89, 0.2);
+    }
+    .updated_horizontal_tab_wrapper .tab_name_wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9599AD;
+        min-height: 40px;
+        padding-bottom: 0px !important;
+        border-bottom: 1px solid #dee2e6;
+    }
+    @media (max-width: 991.98px) {
+        .updated_horizontal_tab_wrapper {
+             flex-flow: row !important; 
+        }
+        .justify-content {
+            justify-content: center !important;
+        }
+    }
+    .justify-content {
+        justify-content: end;
+    }
+}
+.horizontal_tab_fee { 
+    .updated_horizontal_tab_wrapper {
+        background-color: #f6f6f6 !important;
+        border-radius: 20px;
+        color: black !important;
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper {
+        border-bottom: 0px !important;
+        border-radius: 20px;
+        margin-right: 0.5rem !important;
+        margin-left: 0.5rem !important;
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
+        box-shadow: none;
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper.active {
+        background-color: white !important;
+        color: #6e6e6e !important;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper.active:first-child {
+        box-shadow: 4px 0px 8px rgba(89, 89, 89, 0.2);
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper.active:last-child {
+        box-shadow: -4px 0px 8px rgba(89, 89, 89, 0.2);
+    }
+
+    .updated_horizontal_tab_wrapper .tab_name_wrapper.active:not(:first-child):not(:last-child) {
+        box-shadow: -4px 0px 8px rgba(89, 89, 89, 0.2), 4px 0px 8px rgba(89, 89, 89, 0.2);
+    }
+    @media (max-width: 991.98px) {
+        .updated_horizontal_tab_wrapper {
+             flex-flow: row !important; 
+        }
+        .justify-content {
+            justify-content: center !important;
+        }
+        .updated_horizontal_tab_wrapper .tab_name_wrapper {
+            border-bottom: 0px !important;
+            border-radius: 20px;
+            margin-right: 0rem !important;
+            margin-left: 0rem !important;
+            padding-right: 1rem !important;
+            padding-left: 1rem !important;
+            box-shadow: none;
+        }
+    }
+    .justify-content {
+        justify-content: end;
+    }
+}
+
+.examination-dashboard {
+    .updated_horizontal_tab_wrapper {
+        overflow-y: hidden !important;
+        overflow-x: auto !important;
+        scrollbar-width: thin !important;
+
+    }
+}
+
+.section-count-card {
+    .h-25px {
+        height: 25px;
+    }
+}
+
+.notice-board-container {
+    .notice-board-event {
+        position: relative;
+
+        &:not(:last-child)::after {
+            background-color: #eee;
+            content: "";
+            height: calc(100% + 2rem);
+            left: 27px;
+            position: absolute;
+            top: 1.85rem;
+            width: 0.8px;
+        }
+
+        .event-icon {
+            z-index: 1;
+        }
+    }
+}
+.employee-upcoming-birthday-container {
+    .employee-upcoming-birthday-element {
+      border-left: 4px solid;
+    }
+  }
+
+  .todo-container {
+    .todo-element:not(:last-child) {
+      border-bottom: 1px solid #eee;
+    }
+  }
+
+.quick-link-container{
+    .quick-link-element {
+      position: relative;
+    }
+    
+    .quick-link-element:hover .quick-link-icon-container {
+      transform: rotateY(180deg);
+      transition: transform 0.5s ease;
+      transform-style: preserve-3d;
+    }
+    
+    .quick-link-icon-container {
+      position: relative;
+    }
+}
+
+.fee_cards {
+    .icon-hover:hover {
+animation: tada 1s ease-out infinite;
+    }
+    .fs-12 {
+        font-size: 12px;
+    }
+}
+
+.admission_dashboard {
+    .text-blue {
+        color: #405189 !important;
+    }
+}
+.admission_summary_graph{ 
+    height: 508px;
+}
+
+.stats-card-types-container {
+    .type-one-card {
+      position: relative;
+  
+      .icon-container {
+        width: 42px;
+        height: 42px;
+        z-index: 1;
+      }
+  
+      .card-title {
+        line-height: 1.2;
+      }
+  
+      .bg-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0.5;
+      }
+    }
+  }
+  .examination-setting {
+      .table-responsive {
+          max-height: 325px !important;
+          scrollbar-width: thin;
+      }
+      thead {
+        z-index: 999;
+        position: sticky;
+        top: 0;
+      }
+       .menu-sections .menu-options::after {
+        border: solid transparent !important;
+        left: 50% !important;
+        top: 100% !important;
+        transform: translateX(-50%) !important;
+        content: " " !important;
+        height: 0 !important;
+        width: 0 !important;
+        position: absolute !important;
+        border-width: 10px !important;
+    }
+    .menu-sections .menu-options.active-menu-option::after {
+        border-top-color: transparent !important;
+    }
+    
+  }
+
+.student-grade-book-card {
+    .card-header {
+      position: relative;
+  
+      .img-container {
+        width: 98px;
+        height: 98px;
+        padding: 12px;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+    }
+}
+
+.student-log-book {
+    .zIndex {
+        z-index: 1;
+    }
+}
+
+.student-rank-card {
+    position: relative;
+    z-index: 2;
+    .bg-celebration-container {
+      // position: absolute;
+      // bottom: 0;
+      // right: 0;
+      // width: 100%;
+      // height: 72px;
+      // z-index: -1;
+      // transform: translate(-15%, -34%);
+  
+      position: absolute;
+      bottom: 20%;
+      left: 0;
+      width: 50%;
+      height: 72px;
+      z-index: -1;
+  
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+  }
+  
+  .class-result-card {
+    position: relative;
+    .background-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 64px;
+      height: 64px;
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+  }

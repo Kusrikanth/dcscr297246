@@ -1,0 +1,263 @@
+@import "../scss/icons.scss";
+@import "../scss/config/modern/bootstrap.scss";
+@import "../scss/config/modern/app.scss";
+@import "../scss/config/modern/custom.scss";
+@import "./shepherd.css";
+@import "./mermaid.min.css";
+
+/* For the code editor modal's syntax highlighting */
+@import 'prismjs/themes/prism-okaidia.css'; /* Dark theme */
+@import 'prismjs/themes/prism.css'; /* Light theme */
+
+//RTL
+// @import "../scss/rtl/components-rtl";
+// @import "../scss/rtl/layouts-rtl";
+// @import "../scss/rtl/plugins-rtl";
+// @import "../scss/rtl/pages-rtl";
+
+//Rigthsidebar offcanvas
+.offcanvas-header-dark {
+  .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+}
+
+body {
+  * {
+    outline: none;
+  }
+}
+
+.noUi-horizontal .noUi-handle {
+  height: 16px !important;
+  width: 16px !important;
+  border-radius: 50% !important;
+  right: -10px !important;
+  top: -7px !important;
+}
+
+.noUi-connect,
+.noUi-horizontal {
+  height: 2px !important;
+}
+
+.noUi-handle {
+  background: #6ada7d !important;
+  border: 2px solid var(--vz-card-bg) !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.noUi-target {
+  background: #fafafa !important;
+  border-radius: 4px !important;
+  border: 1px solid #d3d3d3 !important;
+  background-color: var(--vz-light) !important;
+  border-color: var(--vz-light) !important;
+  box-shadow: none !important;
+  height: 4px !important;
+}
+
+.dropzone .dz-message {
+  text-align: center;
+}
+
+// //Calendar
+.fc-direction-ltr .fc-daygrid-event.fc-event-end,
+.fc-direction-rtl .fc-daygrid-event.fc-event-start {
+  padding: 5px !important;
+  font-size: 12px !important;
+  margin-right: 2px;
+}
+
+.fc-event {
+  border: none !important;
+}
+
+@include media-breakpoint-down(sm) {
+  .fc-toolbar {
+    display: block !important;
+    text-align: center;
+
+    .fc-left,
+    .fc-right,
+    .fc-center {
+      float: none;
+      display: block;
+      clear: both;
+      margin: 10px 0;
+    }
+  }
+
+  .fc {
+    .fc-toolbar {
+      > * {
+        > * {
+          float: none;
+        }
+      }
+    }
+  }
+
+  .fc-today-button {
+    display: none;
+  }
+}
+
+.flatpickr-calendar.open {
+  z-index: 1090 !important;
+}
+
+.upcoming-scheduled .flatpickr-input[readonly] {
+  display: none;
+}
+
+.ql-container.ql-snow {
+  height: 250px;
+}
+
+.helpdesk {
+  .ql-container.ql-snow {
+    height: 150px;
+  }
+}
+
+.helpdesk-conversation {
+  .conversation-editor .ql-container {
+  height: 290px !important;
+}
+
+.conversation-editor .ql-editor {
+  min-height: 290px;
+  max-height: 290px;
+  overflow-y: auto;
+}
+}
+
+.helpdesk {
+  .ql-container.ql-snow {
+    height: 150px;
+  }
+}
+
+.admissions {
+  .ql-container.ql-snow {
+    height: 240px;
+  }
+}
+
+.rangeslider-horizontal .rangeslider__fill {
+  background-color: #5ea3cb !important;
+}
+
+.Toastify__toast {
+  min-height: 60px !important;
+  max-height: 400px !important;
+}
+
+@each $color, $value in $theme-colors {
+  .simplebar-track-#{$color} {
+    .simplebar-scrollbar:before {
+      background: $value !important;
+    }
+  }
+}
+
+// chat
+.chat-conversation .chat-list .message-box-drop {
+  .nav-btn {
+    font-size: 18px;
+    padding: 4px;
+    color: $gray-600;
+  }
+}
+
+// Authentication pages
+#tsparticles {
+  canvas {
+    position: absolute !important;
+  }
+}
+
+.alert-msg-show {
+  right: 24px;
+  top: 40px;
+  z-index: 1005;
+}
+
+.tiptap-editor {
+  ul {
+    list-style: disc;
+    padding-left: 1.5em;
+  }
+
+  ol {
+    list-style: decimal;
+    padding-left: 1.5em;
+  }
+}
+
+.prism-dark-theme {
+    background: rgba(0,0,0,.85);
+    color: #f8f8f2;
+}
+
+.prism-light-theme {
+    background: #f8f9fa; 
+    color: #333;
+}
+
+.code-block-wrapper {
+  position: relative;
+  margin: 1rem 0;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f7f7f7;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.language-label {
+  font-size: 0.8rem;
+  font-family: sans-serif;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.tiptap-editor .ProseMirror h1 {
+  font-size: 2em;
+  line-height: 1.2;
+  font-weight: unset;
+}
+.tiptap-editor .ProseMirror h2 {
+  font-size: 1.5em;
+  line-height: 1.2;
+  font-weight: unset;
+}
+.tiptap-editor .ProseMirror h3 {
+  font-size: 1.25em;
+  line-height: 1.2;
+  font-weight: unset;
+}
+.tiptap-editor .ProseMirror h4 {
+  font-size: 1.1em;
+  line-height: 1.2;
+  font-weight: unset;
+}
+.tiptap-editor .ProseMirror h5 {
+  font-size: 1em;
+  line-height: 1.2;
+  font-weight: unset;
+}
+.tiptap-editor .ProseMirror h6 {
+  font-size: 0.9em;
+  line-height: 1.2;
+  font-weight: unset;
+}

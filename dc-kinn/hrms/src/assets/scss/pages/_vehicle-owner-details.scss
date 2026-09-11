@@ -1,0 +1,12 @@
+.vehicleowner-wapper {
+  .invoice-box {
+    display: flex;
+    align-items: center;
+    position: relative;
+    .invoice-class {
+      position: absolute;
+      bottom: 12px;
+      left: 13px;
+    }
+  }
+}

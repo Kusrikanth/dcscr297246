@@ -1,0 +1,65 @@
+import React from "react";
+
+export default function ContactDetails() {
+    return (
+        <div className="tw-bg-white tw-shadow tw-rounded-lg">
+            <div className="tw-px-6 tw-py-4 tw-border-b">
+                <h4 className="tw-text-base tw-font-semibold tw-mb-0">
+                    Contact Details
+                </h4>
+            </div>
+
+            <div className="tw-p-6">
+                <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4">
+
+                    <div>
+                        <div className="tw-grid tw-grid-cols-12 tw-gap-2">
+                            <div className="tw-col-span-4">
+                                <label className="tw-text-gray-600">Phone No</label>
+                            </div>
+                            <div className="tw-col-span-8">
+                                +919852124585
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="tw-grid tw-grid-cols-12 tw-gap-2">
+                            <div className="tw-col-span-4">
+                                <label className="tw-text-gray-600">
+                                    Emergency Contact No
+                                </label>
+                            </div>
+                            <div className="tw-col-span-8">
+                                +919852124585
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="tw-grid tw-grid-cols-12 tw-gap-2">
+                            <div className="tw-col-span-4">
+                                <label className="tw-text-gray-600">Email ID</label>
+                            </div>
+                            <div className="tw-col-span-8">
+                                askumar1972@gmail.com
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="tw-grid tw-grid-cols-12 tw-gap-2">
+                            <div className="tw-col-span-4">
+                                <label className="tw-text-gray-600">Address</label>
+                            </div>
+                            <div className="tw-col-span-8">
+                                Almasguda, Almasguda, Hyderabad, Telangana 50004, India
+                            </div>
+                        </div>
+                    </div>
+                   
+                </div>
+            </div>
+        </div>
+    )
+}

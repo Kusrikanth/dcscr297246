@@ -1,0 +1,134 @@
+#external-events {
+  .external-event {
+    padding: 8px 16px;
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* Event styling */
+.fc-event {
+  border: none;
+  font-size: 0.8125rem;
+  margin: 1px 1px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  min-height: 38px;
+  // width: calc(100% - 10px) !important;
+}
+
+.fc-event > div {
+  width: 100%;
+}
+
+.fc-timegrid-now-indicator-line {
+  border-color: #2563eb !important;
+}
+
+// .fc-timegrid-event-harness {
+//   width: 100% !important;
+// }
+
+/* Hover effect for events */
+.fc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+/* Time grid slots */
+.fc .fc-timegrid-slot {
+  height: 2.9em;
+  border-bottom: 1px dashed #eaeaea;
+}
+
+/* Today highlight */
+.fc-day-today {
+  background-color: rgba(66, 133, 244, 0.05) !important;
+}
+
+/* Today column header styling */
+.fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
+  color: #1a73e8;
+  font-weight: bold !important;
+  position: relative;
+}
+
+.fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion:after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 30%;
+  width: 40%;
+  height: 2px;
+  background-color: #1a73e8;
+}
+
+/* Column header styling */
+.fc-col-header-cell {
+  padding: 8px 0;
+  background-color: #f8f9fa;
+}
+
+/* Event title styling */
+.fc-event-title {
+  font-weight: 500;
+  white-space: nowrap !important;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Section name styling */
+.event-section {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: normal;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* TimeLine labels */
+.fc-timegrid-slot-label {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+/* Business hours */
+.fc-timegrid-col.fc-day-past {
+  background-color: #fafafa;
+}
+
+/* Toolbar buttons */
+.fc-button {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+}
+
+.fc-button:hover {
+  background-color: #f0f0f0 !important;
+}
+
+.fc-button-active {
+  background-color: #1a73e8 !important;
+  border-color: #1a73e8 !important;
+}
+
+/* Make calendar responsive */
+@media (max-width: 768px) {
+  .fc-header-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+  }
+}

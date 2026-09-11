@@ -1,0 +1,86 @@
+.fc .fc-daygrid-day-top {
+    display: flex;
+    justify-content: center;
+    flex-direction: row-reverse;
+    align-items: center;
+    margin-top: 7px;
+    color: #ACACAC;
+  
+    a {
+      color: #ACACAC;
+      font-size: 15px;
+    }
+  
+    &.fc-sat,
+    &.fc-sun {
+      border: 1px solid  red; 
+    }
+  }
+  
+  
+  a.fc-col-header-cell-cushion {
+    color: #ACACAC;
+    font-family: 'Nunito';
+    font-weight: 600;
+    padding: 8px 8px;
+  }
+  
+  .fc-scroller.fc-scroller-liquid-absolute {
+    // overflow: hidden !important;
+  }
+  
+  .fc-scroller {
+    // overflow: hidden !important;
+  }
+  
+  .fc-theme-standard td,
+  .fc-theme-standard th {
+    border: 1px solid #f5f5f5;
+  }
+  
+  .fc-today {
+    background-color: transparent !important;
+    border: none !important;
+  }
+  
+  .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 0.2em;
+  }
+  
+  .fc .fc-toolbar h2,
+  .fc .fc-toolbar .h2 {
+    font-size: 21px;
+    line-height: 30px;
+    text-transform: capitalize;
+    color: #777777;
+  }
+  
+  .fc .fc-col-header-cell {
+    /* background-color: var(--vz-light); */
+    color: #ACACAC;
+    text-align: left;
+    font-size: 16px;
+  }
+  
+  .fc .fc-scrollgrid {
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-collapse: separate;
+    border-right-width: 0px;
+    border-top-width: 0px;
+  }
+  .calendar-cell-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border-radius: 50%; 
+    border: 2px solid #28a745
+  }
+  
+  .border-green { border-color: #009801 !important } 
+  .border-red { border-color: #CC0102 !important }
+  .border-yellow { border-color: #FFA500 !important }
+  .border-white { border-color: white !important }
+  .border-gray { border-color: #ACACAC !important }
+  

@@ -1,0 +1,4 @@
+<svg id="delete_bin" data-name="delete bin" xmlns="http://www.w3.org/2000/svg" width="28.5" height="28.5" viewBox="0 0 28.5 28.5">
+  <path id="Shape" d="M0,0H28.5V28.5H0Z" fill="none"/>
+  <path id="Shape-2" data-name="Shape" d="M19.178,22.562H3.384a1.129,1.129,0,0,1-1.128-1.128V6.769H0V4.513H5.64V1.128A1.129,1.129,0,0,1,6.769,0h9.025a1.129,1.129,0,0,1,1.128,1.128V4.513h5.64V6.769H20.307V21.434A1.129,1.129,0,0,1,19.178,22.562ZM4.513,6.769V20.306H18.05V6.769ZM7.9,2.256V4.513h6.769V2.256Zm6.769,14.665H12.409V10.153h2.256v6.768Zm-4.513,0H7.9V10.153h2.256v6.768Z" transform="translate(2.375 2.375)" fill="#db5829"/>
+</svg>

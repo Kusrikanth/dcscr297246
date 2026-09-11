@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 28 28">
+            <g id="checkmark-circle_1_" data-name="checkmark-circle (1)" transform="translate(0.278 -1.214)">
+                <path id="Path_1081" data-name="Path 1081" d="M22.75,28H5.25A5.25,5.25,0,0,1,0,22.75V5.25A5.25,5.25,0,0,1,5.25,0h17.5A5.25,5.25,0,0,1,28,5.25v17.5A5.25,5.25,0,0,1,22.75,28Z" transform="translate(-0.278 1.214)" fill="#9ae99a" opacity="0.75" />
+                <path id="Path_1082" data-name="Path 1082" d="M16.574,18.539a1.789,1.789,0,0,1-2.531,0L11.508,16a1.79,1.79,0,1,1,2.531-2.531l1.27,1.27,3.506-3.506a6.528,6.528,0,1,0,2.016,3.044Z" transform="translate(-0.841 -1.016)" fill="#46d846" />
+                <path id="Path_1083" data-name="Path 1083" d="M15.8,17.94a.593.593,0,0,1-.421-.175L12.843,15.23a.6.6,0,1,1,.844-.844L15.8,16.5l5.991-5.991a.6.6,0,0,1,.844.844l-6.414,6.414A.6.6,0,0,1,15.8,17.94Z" transform="translate(-1.331 -1.086)" fill="#46d846" />
+            </g>
+        </svg>

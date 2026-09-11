@@ -1,0 +1,65 @@
+
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="21.25"
+        height="26.5"
+        viewBox="0 0 21.25 26.5"
+      >
+        <g
+          id="Group_6464"
+          data-name="Group 6464"
+          transform="translate(-1688.75 -609.5)"
+        >
+          <g
+            id="Group_6463"
+            data-name="Group 6463"
+            transform="translate(7.75 66)"
+          >
+            <g
+              id="Icon_ionic-ios-document"
+              data-name="Icon ionic-ios-document"
+              transform="translate(1674.188 540.063)"
+            >
+              <path
+                id="Path_3801"
+                data-name="Path 3801"
+                d="M21.6,9.15h4.789a.261.261,0,0,0,.263-.263h0a1.558,1.558,0,0,0-.563-1.205L22.075,4.334a1.69,1.69,0,0,0-1.084-.389h0a.389.389,0,0,0-.389.389V8.15A1,1,0,0,0,21.6,9.15Z"
+                transform="translate(-3.342 -0.002)"
+                fill="none"
+                stroke="#878a99"
+                strokeWidth="1"
+              />
+              <path
+                id="Path_3802"
+                data-name="Path 3802"
+                d="M15.891,7.794V3.938H9A1.623,1.623,0,0,0,7.313,5.48v16.2A1.623,1.623,0,0,0,9,23.218H21.628a1.623,1.623,0,0,0,1.684-1.542V9.963H18.26A2.279,2.279,0,0,1,15.891,7.794Z"
+                fill="none"
+                stroke="#878a99"
+                strokeWidth="1"
+              />
+            </g>
+          </g>
+          <g
+            id="Ellipse_1329"
+            data-name="Ellipse 1329"
+            transform="translate(1696 622)"
+            fill="#fff"
+            stroke="#fff"
+            strokeWidth="1"
+          >
+            <circle cx="7" cy="7" r="7" stroke="none" />
+            <circle cx="7" cy="7" r="6.5" fill="none" />
+          </g>
+          <g id="pencil-fill" transform="translate(1697.355 623.355)">
+            <path id="Shape" d="M0,0H11.29V11.29H0Z" fill="none" />
+            <path
+              id="Shape-2"
+              data-name="Shape"
+              d="M2,8.454H0v-2L4.657,1.8l2,2L2,8.454ZM7.318,3.131h0L5.323,1.136l1-1a.471.471,0,0,1,.666,0l1.33,1.33a.472.472,0,0,1,0,.666l-1,1Z"
+              transform="translate(1.411 1.425)"
+              fill="#878a99"
+            />
+          </g>
+        </g>
+      </svg>
+    

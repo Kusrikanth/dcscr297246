@@ -1,0 +1,20 @@
+
+      <svg
+        id="eye-fill"
+        xmlns="http://www.w3.org/2000/svg"
+        width="16.371"
+        height="16.371"
+        viewBox="0 0 16.371 16.371"
+      >
+        <path id="Shape" d="M0,0H16.371V16.371H0Z" fill="none" />
+        <path
+          id="Shape-2"
+          data-name="Shape"
+          d="M7.38,12.278A7.5,7.5,0,0,1,0,6.14a7.505,7.505,0,0,1,14.76,0A7.5,7.5,0,0,1,7.38,12.278Zm0-8.186A2.047,2.047,0,1,0,9.153,5.116,2.052,2.052,0,0,0,7.38,4.092Z"
+          transform="translate(0.805 2.046)"
+          fill="none"
+          stroke="#878a99"
+          strokeWidth="1"
+        />
+      </svg>
+    

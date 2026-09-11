@@ -1,0 +1,93 @@
+.modules-container {
+    display: grid;
+    max-height: 250px;
+    overflow-y: auto;
+
+    gap: 0px;
+    width: 100%;
+
+    &.feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    &.permission-grid {
+        grid-template-columns: 100px 1fr 100px 100px 100px;
+    }
+
+    .custom-row {
+        display: contents;
+
+        &:hover {
+            .custom-column {
+                background-color: #f3f6f9;
+
+                .feature-column {
+                    .feature-actions {
+                        display: flex;
+                    }
+                }
+            }
+
+        }
+
+        &.header {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            .custom-column {
+                background-color: #F5F6F9;
+                color: #405189;
+                font-weight: 700;
+                padding: 0.575rem 0.6rem;
+                border-top: 1px solid #E9EBEC;
+            }
+        }
+
+        .custom-column {
+            padding: 0.5rem 0.6rem;
+            border-right: 1px solid #E9EBEC;
+            border-bottom: 1px solid #E9EBEC;
+
+            // &:last-child {
+            //     border-right: none;
+            // }
+
+            &:first-child {
+                padding-left: 1rem;
+                border-left: 1px solid #E9EBEC;
+            }
+
+
+            .feature-column {
+                display: flex;
+                align-items: center;
+
+                .arrow-icon {
+                    margin-right: 2px;
+                    margin-left: -2px;
+                    font-size: 1.25rem;
+                    line-height: 1.25rem;
+
+                    &.openmenu {
+                        transform: rotate(90deg);
+                    }
+
+                    &.closemenu {
+                        transform: rotate(0deg);
+                    }
+                }
+            }
+
+
+        }
+    }
+
+    // .custom-row:last-of-type .custom-column {
+    //     border-bottom: none;
+    // }
+
+    .d-contents {
+        display: contents;
+    }
+
+}

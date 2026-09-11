@@ -1,0 +1,40 @@
+.multi_select {
+  .css-1s2u09g-control {
+    border-color: #ced4da !important;
+  }
+
+  .css-g1d714-ValueContainer {
+    flex-wrap: nowrap !important;
+  }
+
+  .css-1rhbuit-multiValue {
+    background-color: #405189 !important;
+    border-radius: 5px !important;
+
+    .css-12jo7m5,
+    .css-xb97g8 svg {
+      color: white !important;
+    }
+
+    .css-xb97g8 {
+      position: relative !important;
+
+      &::after {
+        content: "";
+        position: absolute !important;
+        left: 1px;
+        height: 60%;
+        width: 1px;
+        background: white;
+      }
+
+      &:hover {
+        background-color: #405189 !important;
+        border-radius: 4px !important;
+      }
+    }
+    .css-14el2xx-placeholder {
+      color: black !important;
+    }
+  }
+}

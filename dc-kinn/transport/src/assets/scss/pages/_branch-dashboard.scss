@@ -1,0 +1,46 @@
+.branch_dashboard_wrapper {
+
+    .top_card {
+        .attendance_in_percentage {
+            background-color: #dff5f2;
+            border-radius: 4px;
+            padding: 0px 5px;
+        }
+
+        .circle_bus {
+            min-height: 48px;
+            min-width: 48px;
+            border-radius: 50px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+    .fee_summary_wapper{
+        height: 450px;
+    }
+    .upcoming_event_wrapper {
+        height: 300px;
+        .date_wrapper {
+            padding: 5px 10px;
+            background-color: #F3F6F9;
+            border-radius: 8px;
+        }
+    }
+    .upcoming_birthday_wrapper{
+        height: 300px;
+    }
+    .term_wise_fee_wrapper {
+        height: 450px;
+        .info_wrapper {
+            
+        }
+    }
+
+    .lead_conversion {
+        .apexcharts-datalabel {
+            transform: translateX(4px);
+          }
+    }
+}

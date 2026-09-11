@@ -1,0 +1,5 @@
+export interface IMenuOptions {
+  id: string;
+  labelName: string;
+  customPadding: string;
+}

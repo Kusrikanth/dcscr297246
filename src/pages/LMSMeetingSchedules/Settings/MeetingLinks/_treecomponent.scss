@@ -1,0 +1,185 @@
+.meeting-tree-container {
+  width: 100%;
+  background: #ffffff;
+  overflow: hidden;
+  // min-height: 248px;
+}
+
+.meeting-tree-item {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.meeting-tree-item:last-child {
+  // border-bottom: 0;
+}
+
+.meeting-tree-header {
+  min-height: 46px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.meeting-tree-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.meeting-tree-arrow {
+  font-size: 18px;
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+}
+
+.meeting-tree-arrow.openmenu {
+  transform: rotate(90deg);
+}
+
+.meeting-tree-arrow.closemenu {
+  transform: rotate(0deg);
+}
+
+.meeting-tree-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.meeting-tree-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.meeting-tree-edit-btn {
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #94a3b8;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.meeting-tree-edit-btn:hover {
+  color: #2563eb;
+}
+
+.meeting-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: #f8fafc;
+}
+
+.meeting-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.meeting-table thead {
+  background: #f5f6f9;
+}
+
+.meeting-table th {
+  padding: 12px 22px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.meeting-table td {
+  padding: 13px 22px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  border-top: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.meeting-table th:nth-child(1),
+.meeting-table td:nth-child(1) {
+  width: 9%;
+}
+
+.meeting-table th:nth-child(2),
+.meeting-table td:nth-child(2) {
+  width: 34%;
+}
+
+.meeting-table th:nth-child(3),
+.meeting-table td:nth-child(3) {
+  width: 20%;
+}
+
+.meeting-table th:nth-child(4),
+.meeting-table td:nth-child(4) {
+  width: 15%;
+}
+.meeting-table th:nth-child(5),
+.meeting-table td:nth-child(5) {
+  width: 10%;
+}
+.meeting-table th:nth-child(6),
+.meeting-table td:nth-child(6) {
+  width: 12%;
+}
+
+.meeting-link {
+  display: block;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: #3b82f6;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meeting-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.meeting-pass {
+  margin-left: 8px;
+}
+
+.created-by-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.created-by-box span {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.created-by-box small {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.meeting-empty-text {
+  padding: 22px;
+  text-align: center;
+  color: #94a3b8;
+}

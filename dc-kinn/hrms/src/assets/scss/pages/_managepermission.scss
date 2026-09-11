@@ -1,0 +1,28 @@
+.managepermission-setup-wrapper {
+  .left-menu-section {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    .menu-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid $border-color;
+      border-top: 1px solid $border-color;
+      // font-size: 18px;
+      font-weight: bold !important;
+    }
+    .menu-list {
+      padding: 0.5rem 1.5rem;
+      border-bottom: 1px solid $border-color;
+      // font-weight: bold !important;
+      cursor: pointer;
+      &:hover,
+      &.active {
+        color: #405189;
+        background-color: #e8ecfa !important;
+      }
+      &.active {
+        // font-weight: $font-weight-medium;
+      }
+    }
+  }
+}

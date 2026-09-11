@@ -1,0 +1,31 @@
+.steper_wrapper {
+  @media (max-width: 991.98px) {
+    flex-flow: column;
+  }
+  .steper_name_wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+
+    min-height: 42px;
+    max-height: 48px;
+    // padding: 0px 26px;
+    background-color: white;
+    color: #878a99;
+    font-size: 16px;
+    border-radius: 3px;
+    &.active {
+      color: #198754;
+      background-color: #0ab39c33;
+      border: 1px solid #198754;
+      color: #0ab39c;
+      font-weight: bold;
+    }
+
+    @media (max-width: 991.98px) {
+      padding: 10px 0px;
+      width: 100%;
+      text-align: center;
+    }
+  }
+}
