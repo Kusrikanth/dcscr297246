@@ -1,7 +1,7 @@
 import { shallowEqual } from "react-redux";
 import { useAppDispatch, useAppSelector } from "../../../../hooks/storehook";
 import { ChangeEvent, Suspense, useEffect, useMemo } from "react";
-import { DateInput, InputCheckbox, QuillEditor, SelectInput } from "../../../../Components/Common";
+import { DateInput, InputCheckboxUpdated, QuillEditor, SelectInput } from "../../../../Components/Common";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import DefaultStudentImage from "../../../../assets/imagesdps/student-default-img.png";
@@ -327,7 +327,7 @@ const FeeDueFollowUpRemarks = (props: any) => {
                                                                                     />
                                                                                 </div>
                                         <div className="tw-col-span-6 tw-self-center">
-                                            <InputCheckbox
+                                            <InputCheckboxUpdated
                                                 name="isChronicParent"
                                                 labelName="Is Chronic Parent"
                                                 value={reviewRemarksForm.values.isChronicParent}

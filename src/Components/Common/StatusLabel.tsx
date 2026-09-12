@@ -14,6 +14,8 @@ export const StatusLabel = ({ type, labelName }: IStatusLabel) => {
     case "incomplete":
     case "medium":
     case "no":
+    case "elite":
+    case "elite_parent":
       return <span className="badge text-uppercase badge-soft-warning tw-p-2"> {labelName} </span>;
     case "cancelled":
     case "rejected":

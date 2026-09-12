@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import BreadCrumb from '../../../../Components/Common/BreadCrumb'
-import { AutoSearchInputUpdated, ConfirmationModal, ModalContainerUpdated, SelectInput } from '../../../../Components/Common'
+import { AutoSearchInputUpdated, ConfirmationModal, ModalContainerUpdated, SelectInput, StatusLabel } from '../../../../Components/Common'
 import DefaultStudentImage from "../../../../assets/imagesdps/student-default-img.png";
 import UncontrolledAccordionCard from '../../../../Components/Common/UncontrolledAccordionCard';
 import AccordionCardItem from '../../../../Components/Common/AccordionCardItem';
@@ -26,7 +26,6 @@ import PreviousYearLedgerBalance from './PreviousYearLedgerBalance';
 import ConsolidatedReportNew from '../../../FrontDesk/Reports/ConsolidatedViewNew';
 import ViewDocumentModal from './ViewDocumentModal';
 import ExportModal from '../../../Directory/StudentManagement/ExportModal';
-import EliteParentIcon from "../../../../assets/imagesdps/directory/icons/elite_parents.svg";
 import { UncontrolledTooltip } from "reactstrap";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Delete02StrokeStandard, DownloadSquare02Icon, EyeIcon, MoneySendCircleIcon } from "@hugeicons-pro/core-stroke-standard";
@@ -651,13 +650,8 @@ const FeeSummaryDetails = () => {
                                         ID : {StudentDetails?.studentDetails?.studentCode}
                                     </span>
                                     {isEliteParentKid && (
-                                        <span
-                                            id="elite-parent-badge"
-                                            className='d-inline-flex align-items-center gap-1 mt-2 px-3 py-1 fw-semibold'
-                                            style={{ backgroundColor: "#FFF4D6", border: "1px solid #F7B84B", borderRadius: "999px", color: "#8A5A00", fontSize: "12px" }}
-                                        >
-                                            <img src={EliteParentIcon} alt="" width={16} height={16} />
-                                            Elite Parent
+                                        <span id="elite-parent-badge" className="tw-mt-2">
+                                            <StatusLabel type="elite" labelName="Elite Parent" />
                                         </span>
                                     )}
                                     {isEliteParentKid && (

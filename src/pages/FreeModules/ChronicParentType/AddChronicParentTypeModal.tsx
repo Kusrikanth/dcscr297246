@@ -8,6 +8,8 @@ import { generateActionPayload } from "../../../utility/reduxutility";
 import { generateUniqueNumber } from "../../../utility/commonutility";
 import { addChronicParentTypesAct, updateChronicParentTypeAct } from "../../../store/fee/feecollections/feecollectionactions";
 import Button from "../../../Components/Common/Button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Delete02StrokeStandard } from "@hugeicons-pro/core-stroke-standard";
 
 const validationSchema = Yup.object().shape({
     chronicParentTypes: Yup.array().of(
@@ -120,7 +122,7 @@ const AddChronicParentTypeModal = (props: any) => {
                                                         onClick={removeRowHndlr}
                                                         className="!tw-px-2 !tw-py-1"
                                                     >
-                                                        <i className="ri-delete-bin-2-fill" />
+                                                        <HugeiconsIcon icon={Delete02StrokeStandard} className="tw-text-red-500" size={18} />
                                                     </Button>
                                                 )}
                                             </div>
