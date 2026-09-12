@@ -39,6 +39,10 @@ export const reportsUrl = {
     get_feename_bytype: `/fee/api/fee-service/v1/reports/fee-report/fetch-feeNames`,
     get_feecollection: `/fee/api/fee-service/v1/reports/fee-report/fee-collection-report`,
     export_feecollection: `/fee/api/fee-service/v1/reports/fee-report/export-fee-collection-report`,
+    // fee calling report (fee due follow-up remark outcomes)
+    get_fee_calling_report: `/fee/api/fee-remarks/calling-report`,
+    get_fee_calling_report_summary: `/fee/api/fee-remarks/calling-report/summary`,
+    export_fee_calling_report: `/fee/api/fee-remarks/calling-report/export`,
 
     get_unpaid_list: `/admission/api/admission-service/unpaid-admissions/get-report`,
     export_unpaid_list: `/admission/api/admission-service/unpaid-admissions/export`,

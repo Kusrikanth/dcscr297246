@@ -259,6 +259,7 @@ const FeeStatusReport = React.lazy(() => import('../pages/FrontDesk/Reports/FeeS
 const FeePaymentReport = React.lazy(() => import('../pages/FrontDesk/Reports/FeePaymentReport'));
 const CCAvenueReport = React.lazy(() => import('../pages/FrontDesk/Reports/CCAvenueReport'));
 const FeeConcessionReport = React.lazy(() => import('../pages/FrontDesk/Reports/FeeConcessionReport'));
+const FeeCallingReport = React.lazy(() => import('../pages/FrontDesk/Reports/FeeCallingReport'));
 const UnpaidReport = React.lazy(() => import('../pages/FrontDesk/Reports/UnpaidReport'));
 const CbseVerification = React.lazy(() => import('../pages/FrontDesk/Reports/CbseVerification'));
 const UpdateCbseVerification = React.lazy(() => import('../pages/FrontDesk/Reports/CbseVerification/UpdateCbseVerification'));
@@ -1420,6 +1421,11 @@ const authProtectedRoutes: any = [
     allowedRoles: ["PRINCIPAL", "VICE_PRINCIPAL", "PA", "TRANSPORT", "TRANSPORT_HEAD",
       "ACCOUNT", "ACCOUNT_HEAD",
       "ADM_CONS", "ADM_HEAD", "HR_HEAD", "BRANCH_ADMIN"]
+  },
+  {
+    path: "/fee-calling-report",
+    component: FeeCallingReport,
+    allowedRoles: ["BRANCH_ADMIN", "INSTITUTE_ADMIN", "PRINCIPAL", "VICE_PRINCIPAL", "PA", "ACCOUNT", "ACCOUNT_HEAD"]
   },
   {
     path: "/unpaid-report",

@@ -64,3 +64,6 @@ export const getStuAvailingListAct = createAction<INewActionType | undefined>(Fe
 export const getTransportOptedListAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_TRANSPORT_OPTED_LIST);
 export const getPendingReqListAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_PENDING_REQ_LIST);
 
+export const getFeeCallingReportAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_FEE_CALLING_REPORT);
+export const getFeeCallingReportSummaryAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_FEE_CALLING_REPORT_SUMMARY);
+export const exportFeeCallingReportAct = createAction<INewActionType | undefined>(FeeReportConstants.EXPORT_FEE_CALLING_REPORT);

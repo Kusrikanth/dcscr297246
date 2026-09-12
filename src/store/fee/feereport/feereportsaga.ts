@@ -6,6 +6,7 @@ import {
     setFeeNameByTypeAct, setfeeTermByTypeAct, setFeeNameForFilterAct,
     setFeeCollectionReportAct,
     setExportFeeCollectionAct,
+    setFeeCallingReportAct, setFeeCallingReportSummaryAct, setExportFeeCallingReportAct,
     setFeeReportErrorAct,
     setUnpaidListAct,
     setUnpaidFeedbackListAct,
@@ -464,6 +465,34 @@ function* exportVehicleTypeListDashboardGen(action: ICreatedActionType): any {
     }
 }
 
+function* getFeeCallingReportGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(getData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setFeeReportErrorAct(response.error));
+    } else {
+        yield put(setFeeCallingReportAct(response.data));
+    }
+}
+function* getFeeCallingReportSummaryGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(getData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setFeeReportErrorAct(response.error));
+    } else {
+        yield put(setFeeCallingReportSummaryAct(response.data));
+    }
+}
+function* exportFeeCallingReportGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(getData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setFeeReportErrorAct(response.error));
+    } else {
+        yield put(setExportFeeCallingReportAct(response.data));
+    }
+}
+
 export default function* feeReportSaga(){
 
     yield takeLatest(FeeReportConstants.GET_FEENAME_BYTYPE_REQUEST, getFeeNameByTypeGen);
@@ -517,5 +546,8 @@ export default function* feeReportSaga(){
     yield takeLatest(FeeReportConstants.STU_AVAILING_LIST, getStuAvailingListGen);
     yield takeLatest(FeeReportConstants.GET_TRANSPORT_OPTED_LIST, getTransportOptedListGen);
     yield takeLatest(FeeReportConstants.GET_PENDING_REQ_LIST, getPendingReqListGen);
+    yield takeLatest(FeeReportConstants.GET_FEE_CALLING_REPORT, getFeeCallingReportGen);
+    yield takeLatest(FeeReportConstants.GET_FEE_CALLING_REPORT_SUMMARY, getFeeCallingReportSummaryGen);
+    yield takeLatest(FeeReportConstants.EXPORT_FEE_CALLING_REPORT, exportFeeCallingReportGen);
 
 }

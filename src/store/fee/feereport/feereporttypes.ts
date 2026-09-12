@@ -51,4 +51,8 @@ export interface IFeeReportReducerState {
     getStuAvailingListResp : any;
     getTransportOptedListResp : any;
     getPendingReqListResp : any;
+
+    feeCallingReportResp: any;
+    feeCallingReportSummaryResp: any;
+    exportFeeCallingReportResp: any;
 }
