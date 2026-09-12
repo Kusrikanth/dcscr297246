@@ -14,6 +14,7 @@ export interface StudentConcessionFilterhProps {
   jodoOptedStatuses: Array<any>;
   termIds: Array<any>;
   isEliteParent: string;
+  chronicParentTypeIds: Array<any>;
 }
 
 interface studentDetailsProps {

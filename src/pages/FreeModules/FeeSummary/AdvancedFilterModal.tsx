@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MultiSelectCheckbox, SelectInput } from "../../../Components/Common";
 import { CustomDatePicker } from "../../DashBoardBranchSummary/CustomDatePicker";
 import { eliteParentOptions } from "./helper";
@@ -6,6 +6,8 @@ import { shallowEqual } from "react-redux";
 import { useAppDispatch, useAppSelector } from "../../../hooks/storehook";
 import Button from "../../../Components/Common/Button";
 import { getFeeTermByTypeAct } from "../../../store/fee/feereport/feereportactions";
+import { getChronicParentTypesListAct } from "../../../store/fee/feecollections/feecollectionactions";
+import { sampleChronicParentTypes, USE_SAMPLE_CHRONIC_PARENT_TYPES } from "../ChronicParentType/helper";
 import { generateActionPayload } from "../../../utility/reduxutility";
 
 const initialValues: any = {
@@ -15,6 +17,7 @@ const initialValues: any = {
     nextFollowupRemarksEndDate: null,
     termIds: [],
     isEliteParent: "",
+    chronicParentTypeIds: [],
 };
 
 /** Only these keys belong to the advance panel; everything else is managed by the inline filter row. */
@@ -29,15 +32,31 @@ const AdvanceFilterModal = (props: any) => {
     );
 
     const dispatch = useAppDispatch();
-    const { showApiLoader, feeTermByTypeResp, instituteId }: any =
+    const { showApiLoader, feeTermByTypeResp, instituteId, branchId, getChronicParentTypesListResp }: any =
         useAppSelector(
-            ({ globalData, feeReport, appData }) => ({
+            ({ globalData, feeReport, appData, feeCollections }) => ({
                 showApiLoader: globalData.showApiLoader,
                 feeTermByTypeResp: feeReport.feeTermByTypeResp,
                 instituteId: appData.currentInstIdResp,
+                branchId: appData.currentBranchIdResp,
+                getChronicParentTypesListResp: feeCollections.getChronicParentTypesListResp,
             }),
             shallowEqual
         );
+
+    const chronicParentTypes = useMemo(() => {
+        const apiList = getChronicParentTypesListResp?.data;
+        if (Array.isArray(apiList) && apiList.length > 0) return apiList;
+        return USE_SAMPLE_CHRONIC_PARENT_TYPES ? sampleChronicParentTypes : [];
+    }, [getChronicParentTypesListResp]);
+
+    useEffect(() => {
+        dispatch(
+            getChronicParentTypesListAct(
+                generateActionPayload("get_chronic_parent_types_list", undefined, { branchId, pageNo: 0, pageSize: 100, sortBy: "createdAt", orderBy: "desc" })
+            )
+        );
+    }, [branchId]);
 
     useEffect(() => {
         if (instituteId) {
@@ -119,6 +138,19 @@ const AdvanceFilterModal = (props: any) => {
                         onChange={onSelectOptionHandler}
                         searchKey="termTypeName"
                         options={Array.isArray(feeTermByTypeResp) ? feeTermByTypeResp : []}
+                    />
+                </div>
+                <div className="tw-mb-4">
+                    <MultiSelectCheckbox
+                        name="chronicParentTypeIds"
+                        idKey="id"
+                        labelText="Chronic Parent Type"
+                        value={enquiryFilterState.chronicParentTypeIds || []}
+                        renderValue={renderSelectedValue("chronicParentTypeName")}
+                        renderOptions={(item: any) => item?.chronicParentTypeName}
+                        onChange={onSelectOptionHandler}
+                        searchKey="chronicParentTypeName"
+                        options={chronicParentTypes}
                     />
                 </div>
                 <div className="tw-mb-4">

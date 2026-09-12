@@ -231,6 +231,7 @@ export const eliteParentOptions: Array<any> = [
 export const multiSelectFilterKeys: Record<string, string> = {
   jodoOptedStatuses: "id",
   termIds: "termId",
+  chronicParentTypeIds: "id",
 };
 
 export function serializeFeeSummaryFilters(filters: any) {

@@ -49,6 +49,7 @@ const initialValues: StudentConcessionFilterhProps = {
     jodoOptedStatuses: [],
     termIds: [],
     isEliteParent: "",
+    chronicParentTypeIds: [],
 };
 
 const FeeSummary = () => {
@@ -547,6 +548,7 @@ const FeeSummary = () => {
                 nextFollowupRemarksEndDate: "",
                 termIds: [],
                 isEliteParent: "",
+                chronicParentTypeIds: [],
             }
             : {
                 ...studentConcessionFilterState,
