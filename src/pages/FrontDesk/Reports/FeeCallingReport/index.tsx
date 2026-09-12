@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { shallowEqual } from "react-redux";
 import { toast } from "react-toastify";
-import { MultiSelectCheckbox, SelectInput, TextInput } from "../../../../Components/Common";
+import { ModalContainerUpdated, MultiSelectCheckbox, SelectInput, TextInput } from "../../../../Components/Common";
 import BreadCrumb from "../../../../Components/Common/BreadCrumb";
 import TableContainer from "../../../../Components/Common/TableContainer";
 import Button from "../../../../Components/Common/Button";
@@ -9,6 +9,7 @@ import { IPaginationState } from "../../../../Components/Common/Pagination";
 import { CustomDatePicker } from "../../../DashBoardBranchSummary/CustomDatePicker";
 import ExportIcon from "../../../../assets/imagesdps/common_icon/export_icon.svg";
 import { useAppDispatch, useAppSelector } from "../../../../hooks/storehook";
+import { useModal } from "../../../../hooks/modalhook";
 import { generateActionPayload } from "../../../../utility/reduxutility";
 import { downloadExcelFile } from "../../../../utility/commonutility";
 import { getBranchClassAct, getBranchCurriculumAct, resetBrchClassAct } from "../../../../store/branchsettings/branchacademics/branchacademicsactions";
@@ -17,33 +18,47 @@ import { getChronicParentTypesListAct } from "../../../../store/fee/feecollectio
 import { exportFeeCallingReportAct, getFeeCallingReportAct, getFeeCallingReportSummaryAct } from "../../../../store/fee/feereport/feereportactions";
 import { sampleChronicParentTypes, USE_SAMPLE_CHRONIC_PARENT_TYPES } from "../../../FreeModules/ChronicParentType/helper";
 import OutcomeSummary from "./OutcomeSummary";
+import DayWiseCallsChart from "./DayWiseCallsChart";
+import CallerWiseTable from "./CallerWiseTable";
+import ExportColumnsModal from "./ExportColumnsModal";
 import {
     eliteYesNoOptions,
     generateColumns,
+    getDayWiseRange,
     sampleFeeCallingReport,
     sampleFeeCallingReportSummary,
     serializeFilters,
     USE_SAMPLE_FEE_CALLING_REPORT,
 } from "./helper";
 
-const initialValues: any = {
-    searchString: "",
+/** Report scope: drives the summary cards, chart, caller-wise table and the call log. Applied via Get Report. */
+const initialScope: any = {
     academicYearId: "",
     curriculumId: "",
     classId: "",
-    statusIds: [],
-    chronicParentTypeIds: [],
-    isChronicParent: "",
     followUpStartDate: null,
     followUpEndDate: null,
+};
+
+/** Call log filters: narrow the log only, applied instantly on change. */
+const initialLogFilters: any = {
+    searchString: "",
+    callerIds: [],
+    statusIds: [],
+    isChronicParent: "",
+    chronicParentTypeIds: [],
     nextActionStartDate: null,
     nextActionEndDate: null,
 };
 
 export default function FeeCallingReport() {
     const dispatch = useAppDispatch();
-    const [filterState, setFilterState] = useState<any>(initialValues);
+    const [scope, setScope] = useState<any>(initialScope);
+    const [logFilters, setLogFilters] = useState<any>(initialLogFilters);
+    const [dayWiseRange, setDayWiseRange] = useState(() => getDayWiseRange());
+    const appliedScope = useRef<any>(initialScope);
     const pagination = useRef({ pageNo: 0, pageSize: 10 });
+    const { closeModal: closeExportModal, modalState: exportModalState, openModal: openExportModal } = useModal();
 
     const {
         academicYearListResp,
@@ -85,7 +100,7 @@ export default function FeeCallingReport() {
     useEffect(() => {
         const yearId = academicYearListResp?.data?.find((year: any) => year?.yearStatus?.toLowerCase() === "current")?.academicYearId;
         if (yearId) {
-            setFilterState((prev: any) => ({ ...prev, academicYearId: yearId }));
+            setScope((prev: any) => ({ ...prev, academicYearId: yearId }));
             dispatch(getBranchCurriculumAct(generateActionPayload("get_brch_curriculum", undefined, { academicYearId: yearId, branchId, pageNo: 0, pageSize: 100, sortBy: "curriculumName", orderBy: "asc" })));
         }
     }, [academicYearListResp]);
@@ -96,25 +111,59 @@ export default function FeeCallingReport() {
         return USE_SAMPLE_CHRONIC_PARENT_TYPES ? sampleChronicParentTypes : [];
     }, [getChronicParentTypesListResp]);
 
-    const statusOptions = useMemo(
-        () => (Array.isArray(getApplicationRemarksStatusResp) ? getApplicationRemarksStatusResp : []).map((item: any) => ({ id: item?.id, name: item?.status })),
-        [getApplicationRemarksStatusResp]
+    // ---------- data ----------
+    const useSample = USE_SAMPLE_FEE_CALLING_REPORT && !(Array.isArray(feeCallingReportResp?.data) && feeCallingReportResp.data.length > 0);
+    const report = useSample ? sampleFeeCallingReport : feeCallingReportResp || {};
+    const summary = useSample ? sampleFeeCallingReportSummary : feeCallingReportSummaryResp || {};
+
+    const statusOptions = useMemo(() => {
+        const fromSummary = (summary?.outcomes || [])
+            .map((o: any) => ({ id: o?.statusId ?? o?.statusName, name: o?.statusName }))
+            .filter((o: any) => o.name);
+        // In sample mode the dropdown must match the sample data, not the live status list.
+        if (useSample) return fromSummary;
+        const rawList = Array.isArray(getApplicationRemarksStatusResp)
+            ? getApplicationRemarksStatusResp
+            : getApplicationRemarksStatusResp?.data || [];
+        const fromApi = rawList
+            .map((item: any) => ({ id: item?.id, name: item?.status ?? item?.statusName ?? item?.name }))
+            .filter((o: any) => o.name);
+        return fromApi.length > 0 ? fromApi : fromSummary;
+    }, [getApplicationRemarksStatusResp, summary, useSample]);
+
+    const callerOptions = useMemo(
+        () => (summary?.callerWise || []).map((c: any) => ({ employeeId: c?.employeeId ?? c?.employeeName, employeeName: c?.employeeName })),
+        [summary]
     );
 
-    // ---------- data ----------
-    const buildParams = (overrides?: any) => serializeFilters({ instituteId, branchId, ...filterState, ...overrides });
+    const scopeParams = (s: any) => serializeFilters({ instituteId, branchId, ...s });
 
-    const fetchReport = (overrides?: any) => {
-        const params = { ...buildParams(overrides), ...pagination.current, sortBy: "createdAt", orderBy: "desc" };
+    const fetchSummary = (s: any) => {
+        const range = getDayWiseRange(s.followUpStartDate, s.followUpEndDate);
+        setDayWiseRange(range);
+        dispatch(getFeeCallingReportSummaryAct(generateActionPayload("get_fee_calling_report_summary", undefined, {
+            ...scopeParams(s),
+            dayWiseStartDate: range.startDate,
+            dayWiseEndDate: range.endDate,
+        })));
+    };
+
+    const fetchCallLog = (s: any, lf: any) => {
+        const params = { ...scopeParams(s), ...serializeFilters(lf), ...pagination.current, sortBy: "createdAt", orderBy: "desc" };
         dispatch(getFeeCallingReportAct(generateActionPayload("get_fee_calling_report", undefined, params)));
-        dispatch(getFeeCallingReportSummaryAct(generateActionPayload("get_fee_calling_report_summary", undefined, buildParams(overrides))));
+    };
+
+    const fetchReport = (s: any = scope, lf: any = logFilters) => {
+        appliedScope.current = s;
+        fetchSummary(s);
+        fetchCallLog(s, lf);
     };
 
     useEffect(() => {
-        if (filterState.academicYearId) {
+        if (scope.academicYearId) {
             fetchReport();
         }
-    }, [filterState.academicYearId]);
+    }, [scope.academicYearId]);
 
     const prevRef = useRef({ prevError: feeReportErrorResp, prevExport: exportFeeCallingReportResp });
     useEffect(() => {
@@ -124,14 +173,15 @@ export default function FeeCallingReport() {
         } else if (exportFeeCallingReportResp && prevExport !== exportFeeCallingReportResp) {
             toast.success("Fee Calling Report Downloaded Successfully.");
             downloadExcelFile(exportFeeCallingReportResp, "Fee_Calling_Report");
+            closeExportModal();
         }
         prevRef.current = { prevError: feeReportErrorResp, prevExport: exportFeeCallingReportResp };
     }, [feeReportErrorResp, exportFeeCallingReportResp]);
 
-    // ---------- filters ----------
-    const filterHandler = (event: any) => {
+    // ---------- scope filters (applied via Get Report) ----------
+    const scopeHandler = (event: any) => {
         const { name, value } = event.target;
-        setFilterState((prev: any) => {
+        setScope((prev: any) => {
             const next = { ...prev, [name]: value };
             if (name === "academicYearId") { next.curriculumId = ""; next.classId = ""; }
             if (name === "curriculumId") { next.classId = ""; }
@@ -142,55 +192,81 @@ export default function FeeCallingReport() {
             dispatch(resetBrchClassAct(undefined));
         } else if (name === "curriculumId") {
             if (value) {
-                dispatch(getBranchClassAct(generateActionPayload("get_brch_curriculum_class", undefined, { academicYearId: filterState.academicYearId, branchId, curriculumId: value, sortBy: "classSequence", orderBy: "asc", pageNo: 0, pageSize: 100 })));
+                dispatch(getBranchClassAct(generateActionPayload("get_brch_curriculum_class", undefined, { academicYearId: scope.academicYearId, branchId, curriculumId: value, sortBy: "classSequence", orderBy: "asc", pageNo: 0, pageSize: 100 })));
             } else {
                 dispatch(resetBrchClassAct(undefined));
             }
         }
     };
 
-    const multiSelectHandler = (selectedOptions: any, config?: any) => {
-        const { name } = config || {};
-        if (!name) return;
-        setFilterState((prev: any) => ({ ...prev, [name]: Array.isArray(selectedOptions) ? selectedOptions : [] }));
+    const scopeDateHandler = ({ startDate, endDate }: any) => {
+        setScope((prev: any) => ({ ...prev, followUpStartDate: startDate || null, followUpEndDate: endDate || null }));
     };
-
-    const dateRangeHandler = ({ startDate, endDate }: any, startKey: string, endKey: string) => {
-        setFilterState((prev: any) => ({ ...prev, [startKey]: startDate || null, [endKey]: endDate || null }));
-    };
-
-    const renderSelected = (labelKey: string) => (items: any) =>
-        Array.isArray(items) ? <div className="text-truncate">{items.map((i: any) => i?.[labelKey]).join(", ")}</div> : null;
 
     const getReportHandler = () => {
         pagination.current = { ...pagination.current, pageNo: 0 };
         fetchReport();
     };
 
-    const clearFilterHandler = () => {
-        const yearId = filterState.academicYearId;
-        const reset = { ...initialValues, academicYearId: yearId };
-        setFilterState(reset);
+    const clearScopeHandler = () => {
+        const reset = { ...initialScope, academicYearId: scope.academicYearId };
+        setScope(reset);
+        setLogFilters(initialLogFilters);
         dispatch(resetBrchClassAct(undefined));
         pagination.current = { ...pagination.current, pageNo: 0 };
-        fetchReport(reset);
+        fetchReport(reset, initialLogFilters);
     };
 
-    const exportHandler = () => {
-        dispatch(exportFeeCallingReportAct(generateActionPayload("export_fee_calling_report", undefined, buildParams(), { responseType: "blob" })));
+    // ---------- call log filters (instant) ----------
+    const applyLogFilters = (next: any) => {
+        setLogFilters(next);
+        pagination.current = { ...pagination.current, pageNo: 0 };
+        fetchCallLog(appliedScope.current, next);
+    };
+
+    const logFilterHandler = (event: any) => {
+        const { name, value } = event.target;
+        applyLogFilters({ ...logFilters, [name]: value });
+    };
+
+    const logMultiSelectHandler = (selectedOptions: any, config?: any) => {
+        const { name } = config || {};
+        if (!name) return;
+        applyLogFilters({ ...logFilters, [name]: Array.isArray(selectedOptions) ? selectedOptions : [] });
+    };
+
+    const logDateHandler = ({ startDate, endDate }: any) => {
+        applyLogFilters({ ...logFilters, nextActionStartDate: startDate || null, nextActionEndDate: endDate || null });
+    };
+
+    const clearLogFilters = () => applyLogFilters(initialLogFilters);
+
+    const hasLogFilters = useMemo(
+        () => Object.keys(initialLogFilters).some((key) => {
+            const v = logFilters[key];
+            return Array.isArray(v) ? v.length > 0 : !!v;
+        }),
+        [logFilters]
+    );
+
+    const renderSelected = (labelKey: string) => (items: any) =>
+        Array.isArray(items) ? <div className="text-truncate">{items.map((i: any) => i?.[labelKey]).join(", ")}</div> : null;
+
+    const exportHandler = (columns: string[]) => {
+        dispatch(exportFeeCallingReportAct(generateActionPayload("export_fee_calling_report", undefined, {
+            ...scopeParams(appliedScope.current),
+            ...serializeFilters(logFilters),
+            columns: columns.join(","),
+        }, { responseType: "blob" })));
     };
 
     function paginationHndlr(paginationInfo: IPaginationState) {
         pagination.current = paginationInfo;
-        fetchReport();
+        fetchCallLog(appliedScope.current, logFilters);
     }
 
     // ---------- table ----------
-    const columns = useMemo(() => generateColumns(filterState.academicYearId), [filterState.academicYearId]);
-
-    const useSample = USE_SAMPLE_FEE_CALLING_REPORT && !(Array.isArray(feeCallingReportResp?.data) && feeCallingReportResp.data.length > 0);
-    const report = useSample ? sampleFeeCallingReport : feeCallingReportResp || {};
-    const summary = useSample ? sampleFeeCallingReportSummary : feeCallingReportSummaryResp || {};
+    const columns = useMemo(() => generateColumns(appliedScope.current.academicYearId || scope.academicYearId), [scope.academicYearId]);
     const { data: rows, totalElements, totalPages, pageble } = report;
 
     const { data: academicYearList } = academicYearListResp || {};
@@ -202,10 +278,10 @@ export default function FeeCallingReport() {
             <div className="container-fluid">
                 <BreadCrumb title="Fee Calling Report" pageTitle="Fee" />
 
-                <div className="tw-bg-white tw-rounded-lg tw-shadow tw-mb-4">
+                <div className="tw-bg-white tw-rounded-lg tw-shadow tw-mb-4 tw-sticky tw-top-[64px] tw-z-20">
                     <div className="tw-border-b tw-px-4 tw-py-3 tw-flex tw-items-center tw-justify-between">
                         <h4 className="tw-text-lg tw-font-semibold tw-text-gray-800 tw-mb-0">Fee Calling Report</h4>
-                        <Button type="button" variant="secondary" onClick={exportHandler} disabled={showApiLoader} className="tw-flex tw-items-center">
+                        <Button type="button" variant="secondary" onClick={() => openExportModal()} disabled={showApiLoader} className="tw-flex tw-items-center">
                             <img src={ExportIcon} alt="" className="tw-h-4 tw-w-4 tw-mr-2" />
                             Export
                         </Button>
@@ -214,25 +290,10 @@ export default function FeeCallingReport() {
                     <div className="tw-p-4">
                         <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-12 tw-gap-4">
                             <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
-                                <div className="search-box">
-                                    <TextInput
-                                        name="searchString"
-                                        value={filterState.searchString}
-                                        onChange={filterHandler}
-                                        inputClassName="tw-bg-gray-100"
-                                        formgroupClassName="tw-mb-0"
-                                        placeHolder="Search"
-                                        labelText="Search"
-                                        floatingLabel
-                                    />
-                                    <i className="ri-search-line search-icon"></i>
-                                </div>
-                            </div>
-                            <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
                                 <SelectInput
                                     name="academicYearId"
-                                    value={filterState.academicYearId}
-                                    onChange={filterHandler}
+                                    value={scope.academicYearId}
+                                    onChange={scopeHandler}
                                     menuItems={academicYearList || []}
                                     valueKey="academicYearId"
                                     textKey="academicYearName"
@@ -244,8 +305,8 @@ export default function FeeCallingReport() {
                             <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
                                 <SelectInput
                                     name="curriculumId"
-                                    value={filterState.curriculumId}
-                                    onChange={filterHandler}
+                                    value={scope.curriculumId}
+                                    onChange={scopeHandler}
                                     menuItems={curriculumTypes || []}
                                     valueKey="branchCurriculumId"
                                     textKey="curriculumName"
@@ -257,8 +318,8 @@ export default function FeeCallingReport() {
                             <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
                                 <SelectInput
                                     name="classId"
-                                    value={filterState.classId}
-                                    onChange={filterHandler}
+                                    value={scope.classId}
+                                    onChange={scopeHandler}
                                     menuItems={classTypes || []}
                                     valueKey="id"
                                     textKey="shortName"
@@ -268,76 +329,20 @@ export default function FeeCallingReport() {
                                 />
                             </div>
                             <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
-                                <MultiSelectCheckbox
-                                    name="statusIds"
-                                    idKey="id"
-                                    labelText="Call Outcome"
-                                    containerClassName="mb-0"
-                                    value={filterState.statusIds}
-                                    renderValue={renderSelected("name")}
-                                    renderOptions={(item: any) => item?.name}
-                                    onChange={multiSelectHandler}
-                                    searchKey="name"
-                                    options={statusOptions}
-                                    floatingLabel
-                                />
-                            </div>
-                            <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
-                                <SelectInput
-                                    name="isChronicParent"
-                                    value={filterState.isChronicParent}
-                                    onChange={filterHandler}
-                                    menuItems={eliteYesNoOptions}
-                                    valueKey="id"
-                                    textKey="name"
-                                    formgroupClassName="tw-mb-0"
-                                    labelText="Is Chronic Parent"
-                                    floatingLabel
-                                />
-                            </div>
-                            <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
-                                <MultiSelectCheckbox
-                                    name="chronicParentTypeIds"
-                                    idKey="id"
-                                    labelText="Chronic Parent Type"
-                                    containerClassName="mb-0"
-                                    value={filterState.chronicParentTypeIds}
-                                    renderValue={renderSelected("chronicParentTypeName")}
-                                    renderOptions={(item: any) => item?.chronicParentTypeName}
-                                    onChange={multiSelectHandler}
-                                    searchKey="chronicParentTypeName"
-                                    options={chronicParentTypes}
-                                    floatingLabel
-                                />
-                            </div>
-                            <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
                                 <CustomDatePicker
                                     name="followUpDateRange"
-                                    startDate={filterState.followUpStartDate}
-                                    endDate={filterState.followUpEndDate}
-                                    onChange={(dates: any) => dateRangeHandler(dates, "followUpStartDate", "followUpEndDate")}
-                                    placeholder="Select a Date Range"
+                                    startDate={scope.followUpStartDate}
+                                    endDate={scope.followUpEndDate}
+                                    onChange={scopeDateHandler}
+                                    placeholder="Last 7 days"
                                     monthsShown={2}
                                     formgroupClassName="tw-mb-0"
                                     labelText="Called On"
                                     floatingLabel
                                 />
                             </div>
-                            <div className="md:tw-col-span-6 lg:tw-col-span-3 xl:tw-col-span-2">
-                                <CustomDatePicker
-                                    name="nextActionDateRange"
-                                    startDate={filterState.nextActionStartDate}
-                                    endDate={filterState.nextActionEndDate}
-                                    onChange={(dates: any) => dateRangeHandler(dates, "nextActionStartDate", "nextActionEndDate")}
-                                    placeholder="Select a Date Range"
-                                    monthsShown={2}
-                                    formgroupClassName="tw-mb-0"
-                                    labelText="Next Action Date"
-                                    floatingLabel
-                                />
-                            </div>
-                            <div className="md:tw-col-span-12 lg:tw-col-span-6 xl:tw-col-span-4 tw-flex tw-items-center tw-justify-end tw-gap-2">
-                                <Button type="button" variant="wrong" onClick={clearFilterHandler} className="!tw-px-3 !tw-py-1">
+                            <div className="md:tw-col-span-12 lg:tw-col-span-12 xl:tw-col-span-4 tw-flex tw-items-center tw-justify-end tw-gap-2">
+                                <Button type="button" variant="wrong" onClick={clearScopeHandler} className="!tw-px-3 !tw-py-1">
                                     Clear filter
                                 </Button>
                                 <Button type="button" variant="primary" onClick={getReportHandler} disabled={showApiLoader}>
@@ -348,11 +353,122 @@ export default function FeeCallingReport() {
                     </div>
                 </div>
 
-                <OutcomeSummary summary={summary} />
+                <OutcomeSummary
+                    summary={summary}
+                    afterCards={
+                        <DayWiseCallsChart
+                            startDate={dayWiseRange.startDate}
+                            endDate={dayWiseRange.endDate}
+                            data={summary?.dayWiseCalls || []}
+                        />
+                    }
+                />
+
+                <CallerWiseTable
+                    startDate={dayWiseRange.startDate}
+                    endDate={dayWiseRange.endDate}
+                    data={summary?.callerWise || []}
+                    outcomeNames={statusOptions.map((o: any) => o?.name)}
+                />
 
                 <div className="tw-bg-white tw-rounded-lg tw-shadow tw-mb-6">
-                    <div className="tw-border-b tw-px-4 tw-py-3">
+                    <div className="tw-border-b tw-px-4 tw-py-3 tw-flex tw-items-center tw-justify-between">
                         <h4 className="tw-text-base tw-font-semibold tw-text-gray-800 tw-mb-0">Call Log</h4>
+                        {hasLogFilters && (
+                            <Button type="button" variant="wrong" onClick={clearLogFilters} className="!tw-px-3 !tw-py-1">
+                                Clear filter
+                            </Button>
+                        )}
+                    </div>
+                    <div className="tw-p-4">
+                        <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-12 tw-gap-4">
+                            <div className="md:tw-col-span-6 lg:tw-col-span-4 xl:tw-col-span-3">
+                                <div className="search-box">
+                                    <TextInput
+                                        name="searchString"
+                                        value={logFilters.searchString}
+                                        onChange={logFilterHandler}
+                                        inputClassName="tw-bg-gray-100"
+                                        formgroupClassName="tw-mb-0"
+                                        placeHolder="Search"
+                                        labelText="Student / Phone"
+                                        floatingLabel
+                                    />
+                                    <i className="ri-search-line search-icon"></i>
+                                </div>
+                            </div>
+                            <div className="md:tw-col-span-6 lg:tw-col-span-4 xl:tw-col-span-2">
+                                <MultiSelectCheckbox
+                                    name="callerIds"
+                                    idKey="employeeId"
+                                    labelText="Called By"
+                                    containerClassName="mb-0"
+                                    value={logFilters.callerIds}
+                                    renderValue={renderSelected("employeeName")}
+                                    renderOptions={(item: any) => item?.employeeName}
+                                    onChange={logMultiSelectHandler}
+                                    searchKey="employeeName"
+                                    options={callerOptions}
+                                    floatingLabel
+                                />
+                            </div>
+                            <div className="md:tw-col-span-6 lg:tw-col-span-4 xl:tw-col-span-2">
+                                <MultiSelectCheckbox
+                                    name="statusIds"
+                                    idKey="id"
+                                    labelText="Outcome"
+                                    containerClassName="mb-0"
+                                    value={logFilters.statusIds}
+                                    renderValue={renderSelected("name")}
+                                    renderOptions={(item: any) => item?.name}
+                                    onChange={logMultiSelectHandler}
+                                    searchKey="name"
+                                    options={statusOptions}
+                                    floatingLabel
+                                />
+                            </div>
+                            <div className="md:tw-col-span-6 lg:tw-col-span-4 xl:tw-col-span-1">
+                                <SelectInput
+                                    name="isChronicParent"
+                                    value={logFilters.isChronicParent}
+                                    onChange={logFilterHandler}
+                                    menuItems={eliteYesNoOptions}
+                                    valueKey="id"
+                                    textKey="name"
+                                    formgroupClassName="tw-mb-0"
+                                    labelText="Chronic"
+                                    floatingLabel
+                                />
+                            </div>
+                            <div className="md:tw-col-span-6 lg:tw-col-span-4 xl:tw-col-span-2">
+                                <MultiSelectCheckbox
+                                    name="chronicParentTypeIds"
+                                    idKey="id"
+                                    labelText="Chronic Parent Type"
+                                    containerClassName="mb-0"
+                                    value={logFilters.chronicParentTypeIds}
+                                    renderValue={renderSelected("chronicParentTypeName")}
+                                    renderOptions={(item: any) => item?.chronicParentTypeName}
+                                    onChange={logMultiSelectHandler}
+                                    searchKey="chronicParentTypeName"
+                                    options={chronicParentTypes}
+                                    floatingLabel
+                                />
+                            </div>
+                            <div className="md:tw-col-span-6 lg:tw-col-span-4 xl:tw-col-span-2">
+                                <CustomDatePicker
+                                    name="nextActionDateRange"
+                                    startDate={logFilters.nextActionStartDate}
+                                    endDate={logFilters.nextActionEndDate}
+                                    onChange={logDateHandler}
+                                    placeholder="Select a Date Range"
+                                    monthsShown={2}
+                                    formgroupClassName="tw-mb-0"
+                                    labelText="Next Action Date"
+                                    floatingLabel
+                                />
+                            </div>
+                        </div>
                     </div>
                     <TableContainer
                         columns={columns}
@@ -367,6 +483,21 @@ export default function FeeCallingReport() {
                     />
                 </div>
             </div>
+
+            <ModalContainerUpdated
+                id="fee-calling-report-export-modal"
+                isOpen={exportModalState.showModal}
+                toggle={closeExportModal}
+                modalTitle="Export Fee Calling Report"
+                modalSize="lg"
+            >
+                <ExportColumnsModal
+                    isOpen={exportModalState.showModal}
+                    toggle={closeExportModal}
+                    onDownload={exportHandler}
+                    isDisabled={showApiLoader}
+                />
+            </ModalContainerUpdated>
         </div>
     );
 }

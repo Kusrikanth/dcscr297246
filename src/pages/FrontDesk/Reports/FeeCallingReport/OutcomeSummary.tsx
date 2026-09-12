@@ -1,9 +1,12 @@
+import React from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Call02Icon, UserMultiple02Icon, AlertCircleIcon, Calendar03Icon } from "@hugeicons-pro/core-stroke-standard";
 import bgImg from "../FeeConcessionReport/cardimg.svg";
 
 interface IOutcomeSummary {
     summary: any;
+    /** Rendered between the headline cards and the outcomes panel. */
+    afterCards?: React.ReactNode;
 }
 
 const headlineCards = [
@@ -13,7 +16,7 @@ const headlineCards = [
     { key: "overdueNextActions", label: "OVERDUE NEXT ACTIONS", icon: Calendar03Icon, iconClass: "jodoflex-icon" },
 ];
 
-export default function OutcomeSummary({ summary }: IOutcomeSummary) {
+export default function OutcomeSummary({ summary, afterCards }: IOutcomeSummary) {
     const outcomes: Array<any> = Array.isArray(summary?.outcomes) ? summary.outcomes : [];
     const totalCalls = Number(summary?.totalCalls) || outcomes.reduce((acc, item) => acc + (Number(item?.count) || 0), 0);
 
@@ -43,6 +46,8 @@ export default function OutcomeSummary({ summary }: IOutcomeSummary) {
                     </div>
                 ))}
             </div>
+
+            {afterCards}
 
             <div className="tw-bg-white tw-rounded-lg tw-shadow tw-mb-4">
                 <div className="tw-border-b tw-px-4 tw-py-3">

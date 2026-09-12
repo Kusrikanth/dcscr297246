@@ -1,6 +1,16 @@
 import { StatusLabel, UserDetails } from "../../../../Components/Common";
 import { getDdMmYyyyWithMonthNameFormat, getDateWithTimeFormat } from "../../../../utility/dateutility";
 import { getDisplayAmountValue } from "../../../../utility/commonutility";
+import { format, subDays } from "date-fns";
+
+/** Window for the day-wise chart: the applied "Called On" range, else the last 7 days (inclusive of today). */
+export function getDayWiseRange(followUpStartDate?: string | null, followUpEndDate?: string | null) {
+    if (followUpStartDate && followUpEndDate) {
+        return { startDate: followUpStartDate, endDate: followUpEndDate };
+    }
+    const today = new Date();
+    return { startDate: format(subDays(today, 6), "yyyy-MM-dd"), endDate: format(today, "yyyy-MM-dd") };
+}
 
 export const eliteYesNoOptions = [
     { id: "true", name: "Yes" },
@@ -11,6 +21,7 @@ export const eliteYesNoOptions = [
 export const multiSelectFilterKeys: Record<string, string> = {
     statusIds: "id",
     chronicParentTypeIds: "id",
+    callerIds: "employeeId",
 };
 
 export function serializeFilters(filters: any) {
@@ -21,6 +32,27 @@ export function serializeFilters(filters: any) {
     });
     return serialized;
 }
+
+/** Columns offered in the Excel export; keys are what the export API receives in `columns`. */
+export const exportColumnOptions: Array<{ key: string; label: string; group: string }> = [
+    { key: "studentName", label: "Student Name", group: "Student" },
+    { key: "studentCode", label: "Student ID", group: "Student" },
+    { key: "curriculumName", label: "Curriculum", group: "Student" },
+    { key: "className", label: "Class", group: "Student" },
+    { key: "sectionName", label: "Section", group: "Student" },
+    { key: "contactPersonName", label: "Contact Person", group: "Contact" },
+    { key: "contactNumber", label: "Phone No.", group: "Contact" },
+    { key: "fatherContact", label: "Father Contact", group: "Contact" },
+    { key: "motherContact", label: "Mother Contact", group: "Contact" },
+    { key: "totalOutstandingAmount", label: "Outstanding Amount", group: "Fee" },
+    { key: "createdAt", label: "Called On", group: "Call" },
+    { key: "employeeName", label: "Called By", group: "Call" },
+    { key: "statusName", label: "Outcome", group: "Call" },
+    { key: "remarks", label: "Remarks", group: "Call" },
+    { key: "nextRemarkActionDate", label: "Next Action Date", group: "Call" },
+    { key: "isChronicParent", label: "Is Chronic Parent", group: "Chronic Parent" },
+    { key: "chronicParentTypeName", label: "Chronic Parent Type", group: "Chronic Parent" },
+];
 
 export function stripHtml(html: string) {
     if (!html) return "";
@@ -148,6 +180,18 @@ export const sampleFeeCallingReport = {
 };
 
 export const sampleFeeCallingReportSummary = {
+    dayWiseCalls: [0, 1, 2, 3, 4, 5, 6].map((offset) => ({
+        date: format(subDays(new Date(), 6 - offset), "yyyy-MM-dd"),
+        count: [2, 0, 3, 1, 4, 2, 1][offset],
+    })),
+    callerWise: [
+        { employeeId: 101, employeeName: "ANCY THOMAS", totalCalls: 3, outcomes: [
+            { statusName: "Promised to Pay", count: 1 }, { statusName: "Requested Time", count: 1 }, { statusName: "Paid", count: 1 },
+        ] },
+        { employeeId: 102, employeeName: "User", totalCalls: 3, outcomes: [
+            { statusName: "Not Reachable", count: 1 }, { statusName: "Disputed", count: 1 }, { statusName: "Cheque Bounced", count: 1 },
+        ] },
+    ],
     totalCalls: 6,
     studentsFollowedUp: 6,
     chronicParents: 4,
