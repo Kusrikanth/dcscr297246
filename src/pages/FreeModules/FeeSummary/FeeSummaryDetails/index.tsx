@@ -7,7 +7,7 @@ import AccordionCardItem from '../../../../Components/Common/AccordionCardItem';
 import AccordionCardHeader from '../../../../Components/Common/AccordionCardHeader';
 import AccordionCardBody from '../../../../Components/Common/AccordionCardBody';
 import TableContainer from '../../../../Components/Common/TableContainer';
-import { generateConcessionColumns, generateFeeDetailsColumns, generateLedgerColumns, generateReceiptColumns, generateRefundsColumns, generateScheduledColumns } from './helper';
+import { generateConcessionColumns, generateFeeDetailsColumns, generateLedgerColumns, generateReceiptColumns, generateRefundsColumns, generateScheduledColumns, USE_SAMPLE_STUDENT_FEE_LEDGER, sampleStudentFeeLedgerDetails, sampleFeeSummary, sampleFeeDetails, sampleFeeReceipts, sampleFeeConcessions, sampleFeeRefunds, sampleAcademicYears, sampleStudentSearchList } from './helper';
 import { shallowEqual } from 'react-redux';
 import { createJodoIdAct, deleteLedgerDetailAct, getFeeDetailsAct, getFeeReceiptsAct, getFeeSummaryDetailsAct, updateJodoDiscountAct, getLedgerDetailsAct, getScheduleDetailsAct, getStudentConcessionForFeeSummaryAct, resetJodoDiscountDetailsAct, updateErpToJodoReceiptAct, updateJodoPaymentToErpAct, printStudentLedgerDetailsAct, resetPrintStudentLedgerDetailsAct, getByIdFeeDueFollowUpRemarksAct } from '../../../../store/fee/feecollections/feecollectionactions';
 import { generateActionPayload } from '../../../../utility/reduxutility';
@@ -446,7 +446,7 @@ const FeeSummaryDetails = () => {
 
     function viewReceiptDetailsHndlr(event: any) {
         const feeReceiptId = event.currentTarget.getAttribute("data-id"),
-            modalData = feeReceiptsResp?.data?.find((item: any) => +item.id === Number(feeReceiptId));
+            modalData = FeeReceiptData?.find((item: any) => +item.id === Number(feeReceiptId));
         if (modalData) {
             setViewReceiptModalState((prev: any) => ({
                 ...prev,
@@ -540,7 +540,7 @@ const FeeSummaryDetails = () => {
                 actionName: "Download Documents",
                 onClickHndlr: (event: any) => {
                     const id = event.currentTarget.getAttribute("data-id");
-                    const findData = getStudentConcessionForFee?.data?.find((item: any) => +item.id === +id);
+                    const findData = effectiveConcessionData?.find((item: any) => +item.id === +id);
                     if (findData) {
                         openViewDocumentModal(findData?.fileInfo)
                     }
@@ -557,17 +557,34 @@ const FeeSummaryDetails = () => {
     const ConcessionColumns = useMemo(() => generateConcessionColumns(concessionMenuOptions), [getStudentConcessionForFee]);
     const RefundColumns = useMemo(() => generateRefundsColumns(), []);
 
-    const { ledgers: LedgerList, basicDetails: StudentDetails } = ledgerDetails || {};
+    const useSampleLedger = USE_SAMPLE_STUDENT_FEE_LEDGER && !ledgerDetails?.basicDetails?.studentDetails;
+    const effectiveLedgerDetails = useSampleLedger ? sampleStudentFeeLedgerDetails : ledgerDetails;
+    const { ledgers: LedgerList, basicDetails: StudentDetails } = effectiveLedgerDetails || {};
     // TODO: remove once the ledger details API returns isEliteParent on parent records.
     const SHOW_ELITE_PARENT_SAMPLE = true;
     const isEliteParentKid = SHOW_ELITE_PARENT_SAMPLE || (Array.isArray(StudentDetails?.studentParentDetails)
         && StudentDetails.studentParentDetails.some((parent: any) => parent?.isEliteParent === true));
-    const { data: FeeSummaryDetails } = feeSummaryDetails || {};
-    const { data: FeeReceiptData } = feeReceiptsResp || {};
-    const { data: StudentList } = studentsListResp || {};
-    const { data: ConcessionList } = studentConcessionList || {};
-    const { data: RefundDetails } = feeRefundsResp || {};
-    const { data: academicYearList } = academicYearListResp || {};
+
+    const useSampleFeeSummary = USE_SAMPLE_STUDENT_FEE_LEDGER && !(Array.isArray(feeSummaryDetails?.data) && feeSummaryDetails.data.length > 0);
+    const FeeSummaryDetails = useSampleFeeSummary ? sampleFeeSummary : feeSummaryDetails?.data;
+
+    const useSampleFeeDetails = USE_SAMPLE_STUDENT_FEE_LEDGER && !(Array.isArray(feeDetails) && feeDetails.length > 0);
+    const effectiveFeeDetails = useSampleFeeDetails ? sampleFeeDetails : feeDetails;
+
+    const useSampleReceipts = USE_SAMPLE_STUDENT_FEE_LEDGER && !(Array.isArray(feeReceiptsResp?.data) && feeReceiptsResp.data.length > 0);
+    const FeeReceiptData = useSampleReceipts ? sampleFeeReceipts : feeReceiptsResp?.data;
+
+    const useSampleConcessions = USE_SAMPLE_STUDENT_FEE_LEDGER && !(Array.isArray(getStudentConcessionForFee?.data) && getStudentConcessionForFee.data.length > 0);
+    const effectiveConcessionData = useSampleConcessions ? sampleFeeConcessions : getStudentConcessionForFee?.data;
+
+    const useSampleRefunds = USE_SAMPLE_STUDENT_FEE_LEDGER && !(Array.isArray(feeRefundsResp?.data) && feeRefundsResp.data.length > 0);
+    const RefundDetails = useSampleRefunds ? sampleFeeRefunds : feeRefundsResp?.data;
+
+    const useSampleAcademicYears = USE_SAMPLE_STUDENT_FEE_LEDGER && !(Array.isArray(academicYearListResp?.data) && academicYearListResp.data.length > 0);
+    const academicYearList = useSampleAcademicYears ? sampleAcademicYears : academicYearListResp?.data;
+
+    const useSampleStudentSearch = USE_SAMPLE_STUDENT_FEE_LEDGER && !(Array.isArray(studentsListResp?.data) && studentsListResp.data.length > 0);
+    const StudentList = useSampleStudentSearch ? sampleStudentSearchList : studentsListResp?.data;
     return (
         <div className="page-content fee-summary">
             <div className="container-fluid">
@@ -949,7 +966,7 @@ const FeeSummaryDetails = () => {
                                                 <div>
                                                     <TableContainer
                                                         columns={FeeDetailsColumns || []}
-                                                        data={feeDetails || []}
+                                                        data={effectiveFeeDetails || []}
                                                         divClass="table-responsive mb-1"
                                                         theadClass="align-middle"
                                                     // thClass="bg-light"
@@ -1019,7 +1036,7 @@ const FeeSummaryDetails = () => {
                                                 <div>
                                                     <TableContainer
                                                         columns={ConcessionColumns}
-                                                        data={Array.isArray(getStudentConcessionForFee?.data) ? getStudentConcessionForFee?.data : []}
+                                                        data={Array.isArray(effectiveConcessionData) ? effectiveConcessionData : []}
                                                         divClass="table-responsive mb-1"
                                                         theadClass="align-middle"
                                                     />

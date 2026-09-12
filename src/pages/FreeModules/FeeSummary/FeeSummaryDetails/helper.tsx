@@ -550,6 +550,108 @@ export function generateRefundsColumns() {
     ])
 }
 
+// TODO: remove once the student-fee-ledger APIs (ledger, fee details, receipts, concessions, refunds,
+// academic years) are reliable on the backend. Lets this page be reviewed without a live backend.
+export const USE_SAMPLE_STUDENT_FEE_LEDGER = true;
+
+export const sampleStudentFeeLedgerDetails = {
+    basicDetails: {
+        studentDetails: {
+            id: 1260072,
+            studentName: "eewW",
+            studentCode: "1260072",
+            studentImageBase64: "",
+            contactNo: "9343434324",
+            emailId: "parent.sample@example.com",
+            dateOfAdmission: "2022-06-01",
+            parentEmployeeStatus: "",
+        },
+        studentAcademicDetails: {
+            curriculumId: 1,
+            classId: 12,
+            curriculumName: "CBSE",
+            classShortName: "II",
+            sectionName: "B",
+            jodoStudentId: "JODO-10234",
+        },
+        studentParentDetails: [
+            { name: "re", isEliteParent: true },
+        ],
+    },
+    studentStatus: "active",
+    admissionNo: "ADM-2022-0456",
+    jodoOptedStatus: "Opted",
+    jodoStudentId: "JODO-10234",
+    ledgers: [
+        { id: 1, feeDetails: "Tuition Fee - Term 1", lastDate: "2026-06-15", amountToPay: 25000, totalConcession: 2000, netAmount: 23000, actualAmountPaid: 23000, amountPaid: 23000, amountToBePaid: 0, excessAmount: 0, refundedAmount: 0, remarks: "", paymentStatus: "PAID" },
+        { id: 2, feeDetails: "Tuition Fee - Term 2", lastDate: "2026-09-15", amountToPay: 25000, totalConcession: 2000, netAmount: 23000, actualAmountPaid: 0, amountPaid: 0, amountToBePaid: 23000, excessAmount: 0, refundedAmount: 0, remarks: "", paymentStatus: "UNPAID" },
+        { id: 3, feeDetails: "Transport Fee - Term 1", lastDate: "2026-06-15", amountToPay: 8000, totalConcession: 0, netAmount: 8000, actualAmountPaid: 4000, amountPaid: 4000, amountToBePaid: 4000, excessAmount: 0, refundedAmount: 0, remarks: "Partial payment", paymentStatus: "PARTIALLY_PAID" },
+    ],
+};
+
+export const sampleFeeSummary = [
+    {
+        amountToPay: 58000,
+        totalConcession: 2000,
+        netAmount: 56000,
+        amountPaid: 27000,
+        previousYearBalance: 0,
+        totalRefunds: 0,
+        currentAmountToBePaid: 29000,
+        totalAdmissionWithDrawlCharges: 0,
+        amountToBePaid: 29000,
+    },
+];
+
+export const sampleFeeDetails = [
+    { feeName: "Tuition Fee", feeType: "Term Fee", totalAmount: 50000, studentConcession: 2000, amountToBePaid: 48000 },
+    { feeName: "Transport Fee", feeType: "Term Fee", totalAmount: 8000, studentConcession: 0, amountToBePaid: 8000 },
+];
+
+export const sampleFeeReceipts = [
+    {
+        id: 1, receiptDate: "2026-06-16", receiptNumber: "RCPT-2026-0456",
+        feeDetailVOList: [{ feeDetail: "Tuition Fee - Term 1" }],
+        paymentMode: "ONLINE", amountToPay: 23000, currentPaidAmount: 23000, fine: 0, cardCharges: 0,
+        transactionId: "TXN9988776655", chequeStatus: "-", receiptStatus: "SUCCESS", remarks: "",
+    },
+    {
+        id: 2, receiptDate: "2026-06-16", receiptNumber: "RCPT-2026-0461",
+        feeDetailVOList: [{ feeDetail: "Transport Fee - Term 1" }],
+        paymentMode: "CASH", amountToPay: 4000, currentPaidAmount: 4000, fine: 0, cardCharges: 0,
+        transactionId: "-", chequeStatus: "-", receiptStatus: "SUCCESS", remarks: "",
+    },
+];
+
+export const sampleFeeConcessions = [
+    {
+        id: 1, createdAt: "2026-06-01T09:30:00", createdBy: "ANCY THOMAS",
+        concessionChildList: [{ feeName: "Tuition Fee", concessionAmount: 2000 }],
+        concessionType: "Sibling Concession", totalConcessionAmount: 2000,
+        employeeName: "ANCY THOMAS", siblingName: "Aarav Sharma", remarks: "Sibling studying in the same school.",
+        fileInfo: [],
+    },
+];
+
+export const sampleFeeRefunds = [
+    {
+        id: 1, transactionDate: "2026-07-01", paymentMode: "ONLINE", refundAmount: 1500,
+        adjustAmount: 0, adjustedStudentName: "", adjustedStudentCode: "", cashAmount: 1500,
+        transactionId: "REF1122334455", accountPayeeName: "re", remarks: "Excess transport fee refunded.",
+    },
+];
+
+export const sampleAcademicYears = [
+    { academicYearId: "1", academicYearName: "2025-26", yearStatus: "current" },
+    { academicYearId: "2", academicYearName: "2024-25", yearStatus: "closed" },
+];
+
+export const sampleStudentSearchList = [
+    { studentId: 1260072, studentCode: "1260072", studentName: "eewW", classId: 12 },
+    { studentId: 1230536, studentCode: "1230536", studentName: "AADHYA RAGINI SAMARAPALLY", classId: 5 },
+    { studentId: 1230312, studentCode: "1230312", studentName: "AARAV JALAN", classId: 5 },
+];
+
 export function generateColumnsForViewDocument() {
     return [
         {

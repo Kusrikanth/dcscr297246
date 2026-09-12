@@ -1,16 +1,65 @@
 import { shallowEqual } from "react-redux";
 import { useAppDispatch, useAppSelector } from "../../../../hooks/storehook";
 import { ChangeEvent, Suspense, useEffect, useMemo } from "react";
+import { useHistory } from "react-router-dom";
 import { DateInput, InputCheckboxUpdated, QuillEditor, SelectInput } from "../../../../Components/Common";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import DefaultStudentImage from "../../../../assets/imagesdps/student-default-img.png";
+import { default as RupeeSvg } from "../../../../assets/imagesdps/feeDashboard/RupeeSvg.svg?react";
 import { Current_Date, getDateWithTimeFormat } from "../../../../utility/dateutility";
 import { generateActionPayload } from "../../../../utility/reduxutility";
+import { getDisplayAmountValue } from "../../../../utility/commonutility";
 import Button from "../../../../Components/Common/Button";
 import { getByIdFeeDueFollowUpRemarksAct, getChronicParentTypesListAct, saveFeeDueFollowUpRemarksAct } from "../../../../store/fee/feecollections/feecollectionactions";
 import { sampleChronicParentTypes, USE_SAMPLE_CHRONIC_PARENT_TYPES } from "../../ChronicParentType/helper";
 import { getApplicationRemarksStatusAct } from "../../../../store/FrontDesk/AdmissionManagment/applicationmanagmentaction";
+
+interface ISiblingFeeDue {
+    studentId: string | number | undefined;
+    academicYearId: string | number | undefined;
+    studentName: string;
+    dueAmount: number;
+}
+
+// TODO: remove once the fee-remarks follow-up APIs (status list, get-by-id) are reliable on the backend.
+// Lets this modal be reviewed without a live backend, and demos the sibling due-amount UI.
+export const USE_SAMPLE_FEE_DUE_FOLLOW_UP = true;
+
+const sampleApplicationRemarksStatusList: Array<{ id: number; status: string }> = [
+    { id: 1, status: "Promised to Pay" },
+    { id: 2, status: "Not Reachable" },
+    { id: 3, status: "Requested Time" },
+    { id: 4, status: "Disputed" },
+    { id: 5, status: "Paid" },
+    { id: 6, status: "Cheque Bounced" },
+];
+
+const sampleFeeDueFollowUpDetails = {
+    studentCode: "1260072",
+    contactPersonName: "re",
+    studentName: "eewW",
+    curriculum: "CBSE",
+    className: "II",
+    fatherContact: "9343434324",
+    motherContact: "N/A",
+    nextRemarkActionDate: "",
+    isChronicParent: false,
+    chronicParentTypeId: "",
+    remarks: [
+        {
+            id: 1,
+            employeeName: "User",
+            createdAt: "2026-09-12T11:40:00",
+            statusId: 1,
+            remarks: "<p>Spoke with the parent, payment expected by next week.</p>",
+        },
+    ],
+    siblingDetails: [
+        { studentId: 65999, studentName: "Aarav Sharma", dueAmount: 12500 },
+        { studentId: 66000, studentName: "Diya Sharma", dueAmount: 4300 },
+    ],
+};
 
 const initialValues = {
     remarks: "",
@@ -43,6 +92,7 @@ const validationSchema = Yup.object({
 
 const FeeDueFollowUpRemarks = (props: any) => {
     const dispatch = useAppDispatch();
+    const history = useHistory();
 
     const { getByIdFeeDueFollowUpRemarksResp, getApplicationRemarksStatusResp, getChronicParentTypesListResp, branchId } = useAppSelector(
         ({ feeCollections, applicationSale, appData }) => ({
@@ -60,6 +110,18 @@ const FeeDueFollowUpRemarks = (props: any) => {
         return USE_SAMPLE_CHRONIC_PARENT_TYPES ? sampleChronicParentTypes : [];
     }, [getChronicParentTypesListResp]);
 
+    const applicationRemarksStatusList = useMemo(() => {
+        if (Array.isArray(getApplicationRemarksStatusResp) && getApplicationRemarksStatusResp.length > 0) {
+            return getApplicationRemarksStatusResp;
+        }
+        return USE_SAMPLE_FEE_DUE_FOLLOW_UP ? sampleApplicationRemarksStatusList : [];
+    }, [getApplicationRemarksStatusResp]);
+
+    const saleData = useMemo(() => {
+        if (getByIdFeeDueFollowUpRemarksResp) return getByIdFeeDueFollowUpRemarksResp;
+        return USE_SAMPLE_FEE_DUE_FOLLOW_UP ? sampleFeeDueFollowUpDetails : undefined;
+    }, [getByIdFeeDueFollowUpRemarksResp]);
+
     useEffect(() => {
         dispatch(
             getChronicParentTypesListAct(
@@ -69,26 +131,25 @@ const FeeDueFollowUpRemarks = (props: any) => {
     }, [branchId]);
 
     useEffect(() => {
-        if (getByIdFeeDueFollowUpRemarksResp) {
-            const latestRemark =
-            getByIdFeeDueFollowUpRemarksResp?.remarks?.[0];
+        if (saleData) {
+            const latestRemark = saleData?.remarks?.[0];
 
             reviewRemarksForm.setValues({
                 remarks: "",
                 nextRemarkActionDate:
-                    getByIdFeeDueFollowUpRemarksResp?.nextRemarkActionDate
-                        ? getByIdFeeDueFollowUpRemarksResp.nextRemarkActionDate.split("T")[0]
+                    saleData?.nextRemarkActionDate
+                        ? saleData.nextRemarkActionDate.split("T")[0]
                         : "",
                 statusId: latestRemark?.statusId
                 ? String(latestRemark.statusId)
                 : "",
-                isChronicParent: !!getByIdFeeDueFollowUpRemarksResp?.isChronicParent,
-                chronicParentTypeId: getByIdFeeDueFollowUpRemarksResp?.chronicParentTypeId
-                    ? String(getByIdFeeDueFollowUpRemarksResp.chronicParentTypeId)
+                isChronicParent: !!saleData?.isChronicParent,
+                chronicParentTypeId: saleData?.chronicParentTypeId
+                    ? String(saleData.chronicParentTypeId)
                     : "",
             });
         }
-    }, [getByIdFeeDueFollowUpRemarksResp]);
+    }, [saleData]);
 
     useEffect(() => {
         const payload = {
@@ -123,8 +184,32 @@ const FeeDueFollowUpRemarks = (props: any) => {
         }
     }, [props?.studentId, props?.academicYearId]);
 
-    const saleData = getByIdFeeDueFollowUpRemarksResp;
     const remarksList = saleData?.remarks || [];
+
+    const siblingDetails = useMemo((): ISiblingFeeDue[] => {
+        const realSiblings = saleData?.siblingDetails || saleData?.siblingFeeDueDetails || [];
+        // The backend doesn't return sibling due-amount data yet on any student, real or sample.
+        // Fall back to sample siblings here too so this UI can be reviewed/demoed regardless.
+        const siblings = Array.isArray(realSiblings) && realSiblings.length > 0
+            ? realSiblings
+            : (USE_SAMPLE_FEE_DUE_FOLLOW_UP ? sampleFeeDueFollowUpDetails.siblingDetails : []);
+        if (!Array.isArray(siblings)) return [];
+        return siblings.map((sibling: Record<string, unknown>) => ({
+            studentId: (sibling?.studentId ?? sibling?.siblingStudentId ?? sibling?.id) as string | number | undefined,
+            academicYearId: (sibling?.academicYearId ?? props.academicYearId) as string | number | undefined,
+            studentName: (sibling?.studentName || sibling?.siblingName || "N/A") as string,
+            dueAmount: (sibling?.dueAmount ?? sibling?.totalDueAmount ?? sibling?.balanceAmount ?? 0) as number,
+        }));
+    }, [saleData, props.academicYearId]);
+
+    const onSiblingClickHndlr = (sibling: ISiblingFeeDue) => {
+        if (!sibling?.studentId) return;
+        props.toggle?.();
+        history.push("/student-fee-ledger/fee-details", {
+            studentId: sibling.studentId,
+            academicYearId: sibling.academicYearId,
+        });
+    };
 
     const applicationInfo = useMemo(
         () => [
@@ -148,7 +233,7 @@ const FeeDueFollowUpRemarks = (props: any) => {
                 studentId: props.studentId,
                 academicYearId: props.academicYearId,
             };
-            const selectedStatus = getApplicationRemarksStatusResp?.find(
+            const selectedStatus = applicationRemarksStatusList?.find(
                 (item: any) => Number(item.id) === Number(values.statusId)
             );
             const selectedChronicType = chronicParentTypes.find(
@@ -212,6 +297,30 @@ const FeeDueFollowUpRemarks = (props: any) => {
                             </div>
                         ))}
                     </div>
+                    {siblingDetails.length > 0 && (
+                        <div className="tw-mt-4 tw-pt-3 tw-border-t">
+                            <p className="tw-mb-2 tw-font-medium tw-text-gray-600">Siblings :</p>
+                            <div className="tw-flex tw-flex-wrap tw-gap-2">
+                                {siblingDetails.map((sibling: ISiblingFeeDue, index: number) => (
+                                    <button
+                                        type="button"
+                                        key={sibling.studentId || index}
+                                        onClick={() => onSiblingClickHndlr(sibling)}
+                                        disabled={!sibling.studentId}
+                                        title={sibling.studentId ? "View sibling's fee ledger" : ""}
+                                        className={`tw-inline-flex tw-items-center tw-gap-1.5 tw-rounded-full tw-border tw-border-gray-300 tw-bg-gray-50 tw-px-3 tw-py-1 tw-text-sm ${sibling.studentId ? "hover:tw-bg-gray-100 tw-cursor-pointer" : "tw-cursor-default"}`}
+                                    >
+                                        <span className="tw-font-medium tw-text-gray-900">{sibling.studentName}</span>
+                                        <span className="tw-text-gray-400">|</span>
+                                        <span className="tw-flex tw-items-center tw-gap-0.5 tw-text-gray-700">
+                                            <RupeeSvg width="10px" height="10px" fill={"#495057"} />
+                                            {getDisplayAmountValue(sibling.dueAmount)}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <div className="tw-p-4 tw-pt-2">
                     <div className="tw-grid tw-grid-cols-12 tw-gap-4">
@@ -310,7 +419,7 @@ const FeeDueFollowUpRemarks = (props: any) => {
                                                                                         value={reviewRemarksForm.values.statusId}
                                                                                         onChange={reviewRemarksForm.handleChange}
                                                                                         onBlur={reviewRemarksForm.handleBlur}
-                                                                                        menuItems={getApplicationRemarksStatusResp || []}
+                                                                                        menuItems={applicationRemarksStatusList}
                                                                                         valueKey="id"
                                                                                         textKey="status"
                                                                                         labelClass='required'

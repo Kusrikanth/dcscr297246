@@ -8,6 +8,12 @@ import {
     ignoredKeys,
     jodoOptedStatusOptions,
     serializeFeeSummaryFilters,
+    USE_SAMPLE_STUDENT_FEE_LEDGER_LIST,
+    sampleAcademicYearsForList,
+    sampleCurriculumTypes,
+    sampleClassTypes,
+    sampleFeeSummaryListRows,
+    sampleFeeSummaryListMeta,
 } from "./helper";
 import { StudentConcessionFilterhProps } from "./FeeSummaryTypes";
 import { useHistory } from "react-router-dom";
@@ -55,7 +61,11 @@ const initialValues: StudentConcessionFilterhProps = {
 const FeeSummary = () => {
     const history = useHistory();
     const [open, setOpen] = useState<boolean>(false);
-    const [feeSummuryListState, setFeeSummuryListState] = useState<any>([])
+    const [feeSummuryListState, setFeeSummuryListState] = useState<any>(
+        USE_SAMPLE_STUDENT_FEE_LEDGER_LIST
+            ? sampleFeeSummaryListRows.map((row: any) => ({ ...row, isSelected: false }))
+            : []
+    )
     const [branchState, setBranchState] = useState([]);
     const { showClearFilterState, count, advanceFilterChange } = useFilterState()
     const { closeModal: closeDownloadDueStudentListModal, openModal: openDownloadDueStudentListModal, modalState: downloadDueStudentListModalState } = useModal()
@@ -180,7 +190,7 @@ const FeeSummary = () => {
                     actionName: "Collect Fee",
                     onClickHndlr: (event: any) => {
                         const id = event.currentTarget.getAttribute("data-id");
-                        const data = feeSummaryList?.data.find((fee: any) => +fee.studentId === +id);
+                        const data = feeSummuryListState?.find((fee: any) => +fee.studentId === +id);
                         const { curriculumId, classId } = data || {},
                             { studentCode, studentId, studentName } = data || {};
                         history.push('/fee-receipts/create-receipt', {
@@ -204,7 +214,7 @@ const FeeSummary = () => {
                 return options.filter(item => item.id === 'view');
             }
             return options;
-        }, [canCreateAndUpdate, studentConcessionFilterState, feeSummaryList]
+        }, [canCreateAndUpdate, studentConcessionFilterState, feeSummuryListState]
     );
 
     const allStudentCheckHndlr = useCallback((event: any) => {
@@ -251,7 +261,9 @@ const FeeSummary = () => {
     }, []);
 
     useEffect(() => {
-        let yearId = academicYearListResp && academicYearListResp.data.find((year: any) => year.yearStatus === "CURRENT").academicYearId
+        const currentYear = academicYearListResp?.data?.find((year: any) => year.yearStatus === "CURRENT")
+            || (USE_SAMPLE_STUDENT_FEE_LEDGER_LIST ? sampleAcademicYearsForList.find((year: any) => year.yearStatus === "CURRENT") : undefined);
+        const yearId = currentYear?.academicYearId;
         FeeSummaryList({ academicYearId: yearId });
         setStudentConcessionFilterState((prev: any) => ({ ...prev, academicYearId: yearId }))
     }, [academicYearListResp]);
@@ -564,10 +576,17 @@ const FeeSummary = () => {
         toggleAdvanceFilter();
     }
 
-    const { data: academicYearList } = academicYearListResp || {};
-    const { data: curriculumTypes } = brchCurriculumResp || {}
-    const { content: classTypes } = branchClassResp || {};
-    const { totalPages, totalElements, pageNumber } = feeSummaryList || {};
+    const useSampleAcademicYears = USE_SAMPLE_STUDENT_FEE_LEDGER_LIST && !(Array.isArray(academicYearListResp?.data) && academicYearListResp.data.length > 0);
+    const academicYearList = useSampleAcademicYears ? sampleAcademicYearsForList : academicYearListResp?.data;
+
+    const useSampleCurriculum = USE_SAMPLE_STUDENT_FEE_LEDGER_LIST && !(Array.isArray(brchCurriculumResp?.data) && brchCurriculumResp.data.length > 0);
+    const curriculumTypes = useSampleCurriculum ? sampleCurriculumTypes : brchCurriculumResp?.data;
+
+    const useSampleClasses = USE_SAMPLE_STUDENT_FEE_LEDGER_LIST && !(Array.isArray(branchClassResp?.content) && branchClassResp.content.length > 0);
+    const classTypes = useSampleClasses ? sampleClassTypes : branchClassResp?.content;
+
+    const useSampleFeeSummaryMeta = USE_SAMPLE_STUDENT_FEE_LEDGER_LIST && !feeSummaryList;
+    const { totalPages, totalElements, pageNumber } = (useSampleFeeSummaryMeta ? sampleFeeSummaryListMeta : feeSummaryList) || {};
     return (
         <>
             <div className="page-content">

@@ -243,4 +243,36 @@ export function serializeFeeSummaryFilters(filters: any) {
   return serialized;
 }
 
+// TODO: remove once the student-fee-ledger list APIs (academic years, curriculum, class, fee summary
+// list) are reliable on the backend. Lets this page be reviewed without a live backend.
+export const USE_SAMPLE_STUDENT_FEE_LEDGER_LIST = true;
+
+export const sampleAcademicYearsForList: Array<any> = [
+  { academicYearId: "SAMPLE-2025-26", academicYearName: "2025-26", yearStatus: "CURRENT" },
+  { academicYearId: "SAMPLE-2024-25", academicYearName: "2024-25", yearStatus: "CLOSED" },
+];
+
+export const sampleCurriculumTypes: Array<any> = [
+  { branchCurriculumId: "SAMPLE-CBSE", curriculumName: "CBSE" },
+  { branchCurriculumId: "SAMPLE-ICSE", curriculumName: "ICSE" },
+];
+
+export const sampleClassTypes: Array<any> = [
+  { id: "SAMPLE-CLASS-1", shortName: "I" },
+  { id: "SAMPLE-CLASS-2", shortName: "II" },
+];
+
+export const sampleFeeSummaryListRows: Array<any> = [
+  { studentId: 1260072, studentCode: "1260072", studentName: "eewW", branchName: "Main Branch", curriculumName: "CBSE", className: "II", sectionName: "B", jodoOptedStatus: "FLEX Opted", amountToPay: 25000, totalActualAmountPaid: 23000, amountPaid: 23000, amountToBePaid: 2000, totalStudentDueBl: 2000, nextRemarksFollowUpDate: "2026-09-18", recentRemarksFollowUpDate: "2026-09-12T11:40:00" },
+  { studentId: 1230536, studentCode: "1230536", studentName: "AADHYA RAGINI SAMARAPALLY", branchName: "Main Branch", curriculumName: "CBSE", className: "I", sectionName: "", jodoOptedStatus: "CRED Opted", amountToPay: 169184, totalActualAmountPaid: 0, amountPaid: 0, amountToBePaid: 169184, totalStudentDueBl: 169184, nextRemarksFollowUpDate: "2026-09-30", recentRemarksFollowUpDate: "2026-09-09T09:20:00" },
+  { studentId: 1230312, studentCode: "1230312", studentName: "AARAV JALAN", branchName: "Main Branch", curriculumName: "CBSE", className: "I", sectionName: "A", jodoOptedStatus: "Non Jodo", amountToPay: 169184, totalActualAmountPaid: 0, amountPaid: 0, amountToBePaid: 169184, totalStudentDueBl: 169184, nextRemarksFollowUpDate: "2026-09-11", recentRemarksFollowUpDate: "2026-09-08T11:05:00" },
+  { studentId: 1260071, studentCode: "1260071", studentName: "ADMSN", branchName: "Main Branch", curriculumName: "CBSE", className: "I", sectionName: "B", jodoOptedStatus: "FLEX Opted", amountToPay: 6021, totalActualAmountPaid: 6021, amountPaid: 6021, amountToBePaid: 0, totalStudentDueBl: 0, nextRemarksFollowUpDate: "", recentRemarksFollowUpDate: "2026-09-07T10:30:00" },
+];
+
+export const sampleFeeSummaryListMeta = {
+  totalPages: 1,
+  totalElements: sampleFeeSummaryListRows.length,
+  pageNumber: 0,
+};
+
 export const ignoredKeys = [  "searchString", "academicYearId", "curriculumId", "classId", "branchId", "type"];
