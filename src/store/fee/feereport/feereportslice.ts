@@ -11,6 +11,9 @@ const initialState: IFeeReportReducerState = {
     feeCallingReportResp: undefined,
     feeCallingReportSummaryResp: undefined,
     exportFeeCallingReportResp: undefined,
+    classWiseFeeSummaryResp: undefined,
+    exportClassWiseFeeSummaryResp: undefined,
+    classWiseFeeSummaryStudentsResp: undefined,
     getUnpaidListStudentResp: undefined,
     getFeedbackByIdResp: undefined,
     exportUnpaidListResp: undefined,
@@ -84,6 +87,18 @@ export const feeReportSlice = createSlice({
         },
         setExportFeeCallingReportAct: (state, action: PayloadAction<any>) => {
             state.exportFeeCallingReportResp = action.payload;
+        },
+        setClassWiseFeeSummaryAct: (state, action: PayloadAction<any>) => {
+            state.classWiseFeeSummaryResp = action.payload;
+        },
+        setExportClassWiseFeeSummaryAct: (state, action: PayloadAction<any>) => {
+            state.exportClassWiseFeeSummaryResp = action.payload;
+        },
+        setClassWiseFeeSummaryStudentsAct: (state, action: PayloadAction<any>) => {
+            state.classWiseFeeSummaryStudentsResp = action.payload;
+        },
+        resetClassWiseFeeSummaryStudentsAct: (state, action: PayloadAction<any>) => {
+            state.classWiseFeeSummaryStudentsResp = action.payload;
         },
         setUnpaidListAct: (state, action: PayloadAction<any>) => {
             state.getUnpaidListStudentResp = action.payload;
@@ -221,7 +236,9 @@ export const {
     setFeeNameByTypeAct, setfeeTermByTypeAct,
     setFeeNameForFilterAct, setFeeCollectionReportAct, setUnpaidFeedbackListAct, setFullEmployeeConcessionAct,
     setExportFeeCollectionAct, setFeeReportErrorAct,
-    setFeeCallingReportAct, setFeeCallingReportSummaryAct, setExportFeeCallingReportAct, setUnpaidListAct, resetUnpaidListAct, resetUnpaidFeedbackListAct, setSendEmailSmsUnpaidListAct, setFeedbackByIdAct, setFillFeedbackFormAct, setExportUnpaidListAct, setCbseVerifyReportAct,
+    setFeeCallingReportAct, setFeeCallingReportSummaryAct, setExportFeeCallingReportAct,
+    setClassWiseFeeSummaryAct, setExportClassWiseFeeSummaryAct,
+    setClassWiseFeeSummaryStudentsAct, resetClassWiseFeeSummaryStudentsAct, setUnpaidListAct, resetUnpaidListAct, resetUnpaidFeedbackListAct, setSendEmailSmsUnpaidListAct, setFeedbackByIdAct, setFillFeedbackFormAct, setExportUnpaidListAct, setCbseVerifyReportAct,
     setDownloadCbseVerifyListAct, setExportCbseVerificationAct,setFeeDashboardStatsAct, setFeeDashboardJodoPaymentModeStatusStatsAct, setFeeDashboardTransactionSummaryAct,setFeeCollectionDashboardAct,setFeeDashboardCollectionStatsAct,setFeeRevenueDashboardAct,setFeeDashboardConcessionAct,setccAvenueOrderStatsAct,setFeeDashboardPaymentModeAct,setNetPaidFeeByBranchAct,setBranchWiseDueSummaryAct,setUnpaidStudentCountAct,setBranchWiseNetPaidByDateAct,setBranchWiseNetAmountAct,setClassSectionWiseNetAmountAct,setExportClassSectionWiseNetAmountAct,setVehicleTypeListDashboardAct,setTransportFeeTermWiseAct,setActiveVehiclesListAct,setStuAvailingListAct,setTransportOptedListAct,setPendingReqListAct,setBranchWiseDueSummaryExportAct,setExportBranchWiseNetPaidByDateAct,setExportBranchWiseNetAmountAct,setExportTransportFeeTermWiseAct,setExportVehicleTypeListDashboardAct,
 } = feeReportSlice.actions;
 

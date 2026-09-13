@@ -6,7 +6,8 @@ import { INewActionType } from "../../types";
 export {
     setFeeNameByTypeAct, setfeeTermByTypeAct,
     setFeeNameForFilterAct,
-    resetUnpaidFeedbackListAct, resetUnpaidListAct,setUnpaidStudentCountAct
+    resetUnpaidFeedbackListAct, resetUnpaidListAct,setUnpaidStudentCountAct,
+    resetClassWiseFeeSummaryStudentsAct
 } from "./feereportslice";
 export const getFeeNameByTypeAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_FEENAME_BYTYPE_REQUEST);
 export const getFeeTermByTypeAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_FEETERM_BYTYPE_REQUEST);
@@ -67,3 +68,7 @@ export const getPendingReqListAct = createAction<INewActionType | undefined>(Fee
 export const getFeeCallingReportAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_FEE_CALLING_REPORT);
 export const getFeeCallingReportSummaryAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_FEE_CALLING_REPORT_SUMMARY);
 export const exportFeeCallingReportAct = createAction<INewActionType | undefined>(FeeReportConstants.EXPORT_FEE_CALLING_REPORT);
+
+export const getClassWiseFeeSummaryAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_CLASS_WISE_FEE_SUMMARY);
+export const exportClassWiseFeeSummaryAct = createAction<INewActionType | undefined>(FeeReportConstants.EXPORT_CLASS_WISE_FEE_SUMMARY);
+export const getClassWiseFeeSummaryStudentsAct = createAction<INewActionType | undefined>(FeeReportConstants.GET_CLASS_WISE_FEE_SUMMARY_STUDENTS);

@@ -7,6 +7,7 @@ import {
     setFeeCollectionReportAct,
     setExportFeeCollectionAct,
     setFeeCallingReportAct, setFeeCallingReportSummaryAct, setExportFeeCallingReportAct,
+    setClassWiseFeeSummaryAct, setExportClassWiseFeeSummaryAct, setClassWiseFeeSummaryStudentsAct,
     setFeeReportErrorAct,
     setUnpaidListAct,
     setUnpaidFeedbackListAct,
@@ -493,6 +494,35 @@ function* exportFeeCallingReportGen(action: ICreatedActionType): any {
     }
 }
 
+function* getClassWiseFeeSummaryGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(getData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setFeeReportErrorAct(response.error));
+    } else {
+        yield put(setClassWiseFeeSummaryAct(response.data));
+    }
+}
+function* exportClassWiseFeeSummaryGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(getData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setFeeReportErrorAct(response.error));
+    } else {
+        yield put(setExportClassWiseFeeSummaryAct(response.data));
+    }
+}
+
+function* getClassWiseFeeSummaryStudentsGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(getData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setFeeReportErrorAct(response.error));
+    } else {
+        yield put(setClassWiseFeeSummaryStudentsAct(response.data));
+    }
+}
+
 export default function* feeReportSaga(){
 
     yield takeLatest(FeeReportConstants.GET_FEENAME_BYTYPE_REQUEST, getFeeNameByTypeGen);
@@ -549,5 +579,8 @@ export default function* feeReportSaga(){
     yield takeLatest(FeeReportConstants.GET_FEE_CALLING_REPORT, getFeeCallingReportGen);
     yield takeLatest(FeeReportConstants.GET_FEE_CALLING_REPORT_SUMMARY, getFeeCallingReportSummaryGen);
     yield takeLatest(FeeReportConstants.EXPORT_FEE_CALLING_REPORT, exportFeeCallingReportGen);
+    yield takeLatest(FeeReportConstants.GET_CLASS_WISE_FEE_SUMMARY, getClassWiseFeeSummaryGen);
+    yield takeLatest(FeeReportConstants.EXPORT_CLASS_WISE_FEE_SUMMARY, exportClassWiseFeeSummaryGen);
+    yield takeLatest(FeeReportConstants.GET_CLASS_WISE_FEE_SUMMARY_STUDENTS, getClassWiseFeeSummaryStudentsGen);
 
 }

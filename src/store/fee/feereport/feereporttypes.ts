@@ -55,4 +55,8 @@ export interface IFeeReportReducerState {
     feeCallingReportResp: any;
     feeCallingReportSummaryResp: any;
     exportFeeCallingReportResp: any;
+
+    classWiseFeeSummaryResp: any;
+    exportClassWiseFeeSummaryResp: any;
+    classWiseFeeSummaryStudentsResp: any;
 }

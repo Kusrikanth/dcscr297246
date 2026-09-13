@@ -43,6 +43,10 @@ export const reportsUrl = {
     get_fee_calling_report: `/fee/api/fee-remarks/calling-report`,
     get_fee_calling_report_summary: `/fee/api/fee-remarks/calling-report/summary`,
     export_fee_calling_report: `/fee/api/fee-remarks/calling-report/export`,
+    // class-wise outstanding summary (student-wise unpaid report rolled up by class and academic year)
+    get_class_wise_fee_summary: `/fee/api/fee-service/v1/reports/fee-report/class-wise-outstanding-summary`,
+    export_class_wise_fee_summary: `/fee/api/fee-service/v1/reports/fee-report/class-wise-outstanding-summary/export`,
+    get_class_wise_fee_summary_students: `/fee/api/fee-service/v1/reports/fee-report/class-wise-outstanding-summary/students`,
 
     get_unpaid_list: `/admission/api/admission-service/unpaid-admissions/get-report`,
     export_unpaid_list: `/admission/api/admission-service/unpaid-admissions/export`,

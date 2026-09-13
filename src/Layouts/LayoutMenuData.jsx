@@ -896,7 +896,7 @@ export function generateMenuOptions(instituteCode) {
         "/online-payment-details", "/webhook-logs", "/student-fee-ledger", "/fee-concession-report",
         "/special-fee-cheque-history", "/admission-withdrawal", "/cash-payment-approvals", "/transport-fee-concession",
         "/fee-payment-report", "/payment-reconciliation", "/ccavenue-daily-collection-report", "/id-card", "/fee-concession-type",
-        "/chronic-parent-type", "/fee-calling-report"
+        "/chronic-parent-type", "/fee-calling-report", "/class-wise-outstanding-summary"
       ],
       hasChildMenu: true,
       childMenu: [
@@ -1192,7 +1192,7 @@ export function generateMenuOptions(instituteCode) {
           permissions: [""],
           hasChildMenu: true,
           childRoutes: ["/fee-report", "/fee-concession-report", "/fee-payment-report", "/ccavenue-daily-collection-report",
-            "/fee-calling-report",
+            "/fee-calling-report", "/class-wise-outstanding-summary",
           ],
           childMenu: [
             // {
@@ -1225,6 +1225,13 @@ export function generateMenuOptions(instituteCode) {
               id: "fee-calling-report",
               menuName: "Fee Calling Report",
               link: "/fee-calling-report",
+              parentId: "fee",
+              permissions: [""],
+            },
+            {
+              id: "class-wise-outstanding-summary",
+              menuName: "Class-wise Outstanding Summary",
+              link: "/class-wise-outstanding-summary",
               parentId: "fee",
               permissions: [""],
             },
