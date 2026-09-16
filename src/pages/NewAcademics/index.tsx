@@ -34,6 +34,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Delete02StrokeStandard, DeleteIcon, ElearningExchangeIcon, EyeIcon, MeetingRoomIcon, PlusSignSquareIcon } from "@hugeicons-pro/core-stroke-standard";
 import { useModal } from "../../hooks/modalhook";
 import ExportModal from "../Directory/StudentManagement/ExportModal";
+import ExportIcon from "../../assets/imagesdps/common_icon/export_icon.svg";
+import Button from "../../Components/Common/Button";
+import { csvExportHndlr } from "../../utility/commonutility";
 const initialValues: academicsFilterhProps = {
   searchString: "",
   branchClassId: "",
@@ -83,8 +86,10 @@ const NewAcademics = (props: any) => {
 
   const getSectionListResp = (otherProps?: any) => {
 
-    let payload = { branchClassId: academicsFilterState.branchClassId || null, masterAcademicYearId: academicsFilterState.masterAcademicYearId, pageNo: academicsFilterState.pageNo, searchString: academicsFilterState.searchString, pageSize: academicsFilterState.pageSize, sortBy: filterState.sortBy, orderBy: filterState.orderBy, ...otherProps }
-    if (payload.branchClassId && payload.masterAcademicYearId) {
+    // branchClassId is optional here: when it is not set, the API returns
+    // sections across all classes for the selected academic year/curriculum.
+    let payload = { branchClassId: academicsFilterState.branchClassId || null, curriculumId: academicsFilterState.curriculumId || null, masterAcademicYearId: academicsFilterState.masterAcademicYearId, pageNo: academicsFilterState.pageNo, searchString: academicsFilterState.searchString, pageSize: academicsFilterState.pageSize, sortBy: filterState.sortBy, orderBy: filterState.orderBy, ...otherProps }
+    if (payload.masterAcademicYearId) {
       dispatch(
         getSectionList(
           generateActionPayload("get_section_list", undefined, payload)
@@ -94,8 +99,8 @@ const NewAcademics = (props: any) => {
   }
   const getSectionFilterListResp = (otherProps?: any) => {
 
-    let payload = { branchClassId: academicsFilterState.branchClassId || null, masterAcademicYearId: academicsFilterState.masterAcademicYearId, pageNo: academicsFilterState.pageNo, pageSize: academicsFilterState.pageSize, sortBy: filterState.sortBy, orderBy: filterState.orderBy, ...otherProps }
-    if (payload.branchClassId && payload.masterAcademicYearId && loggedInUserRole === "TEACHER") {
+    let payload = { branchClassId: academicsFilterState.branchClassId || null, curriculumId: academicsFilterState.curriculumId || null, masterAcademicYearId: academicsFilterState.masterAcademicYearId, pageNo: academicsFilterState.pageNo, pageSize: academicsFilterState.pageSize, sortBy: filterState.sortBy, orderBy: filterState.orderBy, ...otherProps }
+    if (payload.masterAcademicYearId && loggedInUserRole === "TEACHER") {
       dispatch(
         sectionListFilterAct(
           generateActionPayload("get_section_list", undefined, payload)
@@ -204,22 +209,18 @@ const NewAcademics = (props: any) => {
     const { data } = brchCurriculumResp || {};
 
     if (Array.isArray(data) && data.length > 0) {
-      const payload = { branchId: branchId, curriculumId: data[0].branchCurriculumId, academicYearId: academicsFilterState.masterAcademicYearId, sortBy: "classSequence", orderBy: "asc", pageNo: 0, pageSize: 100 };
+      const curriculumId = data[0].branchCurriculumId;
+      const payload = { branchId: branchId, curriculumId: curriculumId, academicYearId: academicsFilterState.masterAcademicYearId, sortBy: "classSequence", orderBy: "asc", pageNo: 0, pageSize: 100 };
       if (payload.academicYearId && payload.curriculumId) {
         dispatch(getBranchClassAct(generateActionPayload("get_brch_curriculum_class", undefined, payload)));
       }
-      setAcademicsFilterState((prev: any) => ({ ...prev, curriculumId: data[0].branchCurriculumId }))
+      setAcademicsFilterState((prev: any) => ({ ...prev, curriculumId, branchClassId: "" }))
+      // Class filter is optional — load sections for all classes under this
+      // curriculum/academic year by default; the user can narrow down later.
+      getSectionListResp({ curriculumId, branchClassId: null, pageNo: 0 });
+      getSectionFilterListResp({ curriculumId, branchClassId: null, pageNo: 0 });
     }
   }, [brchCurriculumResp])
-  
-  useEffect(() => {
-    const { content } = branchClassResp || {};
-    if (Array.isArray(content) && content.length > 0) {
-      setAcademicsFilterState((prev: any) => ({ ...prev, branchClassId: content[0].id }))
-      getSectionListResp({ branchClassId: content[0].id });
-      getSectionFilterListResp({ branchClassId: content[0].id });
-    }
-  }, [branchClassResp])
   useEffect(() => {
     updateSectionStudentsResp &&
       updateSectionStudentsResp.status === 200 &&
@@ -419,9 +420,14 @@ const NewAcademics = (props: any) => {
         [name]: value,
         academicYearId: academicsFilterState.masterAcademicYearId,
       });
+      // Class filter resets when curriculum changes — refresh the table
+      // with sections across all classes for the new curriculum.
+      getSectionListResp({ curriculumId: value, branchClassId: null, pageNo: 0 });
+      getSectionFilterListResp({ curriculumId: value, branchClassId: null, pageNo: 0 });
     } else if (name === 'branchClassId') {
-      getSectionListResp({ branchClassId: value });
-      getSectionFilterListResp({ branchClassId: value });
+      // An empty value means "All classes" — the Class filter is optional.
+      getSectionListResp({ branchClassId: value || null, pageNo: 0 });
+      getSectionFilterListResp({ branchClassId: value || null, pageNo: 0 });
     } else {
       getSectionListResp({ [name]: value });
     }
@@ -454,6 +460,31 @@ const NewAcademics = (props: any) => {
   const { data: curriculumTypes } = brchCurriculumResp || {}
   const { content: classTypes } = branchClassResp || {};
 
+  const exportSectionListHndlr = () => {
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      toast.info("No records to export");
+      return;
+    }
+    // Sections aren't tagged with a curriculum name of their own — the whole
+    // list is already scoped to the selected Curriculum filter, so use that.
+    const selectedCurriculumName = curriculumTypes?.find(
+      (curriculum: any) => curriculum.branchCurriculumId === academicsFilterState.curriculumId
+    )?.curriculumName || "";
+    const headers = ["Curriculum", "Class", "Section Name", "Room No", "Class Teacher", "No. of Students"];
+    const rows = SectionList.map((section: any) => [
+      section.curriculumName || selectedCurriculumName,
+      section.className || "",
+      section.sectionName || "",
+      section.roomNo || "",
+      section.sectionTeacherName || "",
+      section.studentCount ?? "",
+    ]);
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell: any) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    csvExportHndlr(csvContent, "Classroom_Management_Sections");
+  };
+
   return (
     <>
       <div className="page-content free_payment_record_wrapper">
@@ -461,10 +492,19 @@ const NewAcademics = (props: any) => {
           <BreadCrumb title="Classroom Management" pageTitle="Academics" />
           <div className="tw-bg-white tw-rounded tw-shadow tw-mb-6">
             <div className="tw-border-b tw-px-4 tw-py-3">
-              <div className="tw-flex tw-items-center">
+              <div className="tw-flex tw-items-center tw-justify-between tw-flex-wrap tw-gap-3">
                 <h4 className="tw-text-base tw-font-semibold tw-flex-1">
                   Classroom Management
                 </h4>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={exportSectionListHndlr}
+                  className="tw-flex tw-items-center"
+                >
+                  <img src={ExportIcon} className="tw-h-4 tw-w-4 tw-mr-2" alt="" />
+                  Export
+                </Button>
               </div>
             </div>
             <div className="tw-p-0">
@@ -521,6 +561,7 @@ const NewAcademics = (props: any) => {
                         textKey="shortName"
                         formgroupClassName="tw-mb-0"
                         labelText="Class"
+                        defaultSelect="All Classes"
                         floatingLabel
                       />
                     </div>

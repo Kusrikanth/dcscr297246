@@ -19,6 +19,18 @@ export function generateColumns(
 ) {
   return [
     {
+      Header: "Class",
+      accessor: "className",
+      disableSortBy: true,
+      Cell: ({ row: { original } }: any) => {
+        return (
+          <>
+            <div>{original.className}</div>
+          </>
+        );
+      },
+    },
+    {
       Header: "Section Name",
       accessor: "sectionName",
       Cell: ({ row: { original } }: any) => {
