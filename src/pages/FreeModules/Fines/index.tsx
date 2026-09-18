@@ -377,7 +377,7 @@ const FeeFines: React.FC<any> = () => {
         isOpen={addFinesModalState.showModal}
         toggle={toggleFeeFineModal}
         modalTitle={addFinesModalState.feeFineId ? "Update Fine" : "Create Fine"}
-        modalSize="md"
+        modalSize="xl"
       >
         <AddSpecialFeeModal
           toggle={toggleFeeFineModal}
