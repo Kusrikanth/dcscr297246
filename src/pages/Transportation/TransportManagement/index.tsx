@@ -306,7 +306,7 @@ const TansportManagement = () => {
                 id="sendMessageModalState"
                 isOpen={sendMessageModalState.showModal}
                 toggle={sendMessageCloseModal}
-                modalTitle="Send transport delay update"
+                modalTitle="Send Transport Message"
                 modalSize="lg"
             >
                 <SendMessageModal

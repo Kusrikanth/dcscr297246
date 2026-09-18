@@ -1,10 +1,41 @@
 import { useMemo } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { Button, InputCheckboxUpdated, TextInput } from "../../../Components/Common";
+import { Button, InputCheckboxUpdated, RadioInputContainer, SelectInput, TextArea, TextInput } from "../../../Components/Common";
+
+const MESSAGE_TYPES = {
+    delay: "DELAY",
+    custom: "CUSTOM",
+};
+
+const messageTypeOptions = [
+    {
+        id: MESSAGE_TYPES.delay,
+        name: "Delay Alert",
+        description: "Standard template with delay duration",
+    },
+    {
+        id: MESSAGE_TYPES.custom,
+        name: "Custom Message",
+        description: "Compose your own update",
+    },
+];
+
+const mediaTypeOptions = [
+    {
+        id: "NONE",
+        name: "None",
+    },
+];
+
+const CUSTOM_MESSAGE_TEMPLATE = "Dear Parent,\nHere is an update for {{1}} ({{2}}):\n\n{{3}}\n\nThank you!";
 
 const initialValues: any = {
+    messageType: MESSAGE_TYPES.delay,
     delayDuration: "",
+    title: "",
+    mediaType: "NONE",
+    msgBody: "",
     communicationModes: {
         isWhatsApp: true,
         isMobile: true,
@@ -12,9 +43,27 @@ const initialValues: any = {
 };
 
 const validationSchema = Yup.object({
-    delayDuration: Yup.number()
-        .typeError("Delay duration is required")
-        .required("Delay duration is required"),
+    delayDuration: Yup.mixed().test("delayDuration", "Delay duration is required", function (value: any) {
+        if (this.parent?.messageType !== MESSAGE_TYPES.delay) {
+            return true;
+        }
+        if (value === "" || value === null || value === undefined) {
+            return false;
+        }
+        return !Number.isNaN(Number(value));
+    }),
+    title: Yup.string().test("title", "Title is required", function (value: any) {
+        if (this.parent?.messageType !== MESSAGE_TYPES.custom) {
+            return true;
+        }
+        return Boolean(value?.trim());
+    }),
+    msgBody: Yup.string().test("msgBody", "Description is required", function (value: any) {
+        if (this.parent?.messageType !== MESSAGE_TYPES.custom) {
+            return true;
+        }
+        return Boolean(value?.trim());
+    }),
     communicationModes: Yup.object()
         .shape({
             isWhatsApp: Yup.boolean(),
@@ -63,9 +112,17 @@ const SendMessageModal = ({ toggle }: any) => {
         },
     });
 
+    const isCustomMessage = sendMessageForm.values.messageType === MESSAGE_TYPES.custom;
+
     const messagePreview = useMemo(() => {
+        if (isCustomMessage) {
+            return CUSTOM_MESSAGE_TEMPLATE
+                .replace(/{{\s*1\s*}}/g, getRouteLabel(previewRoute))
+                .replace(/{{\s*2\s*}}/g, getVehicleLabel(previewRoute))
+                .replace(/{{\s*3\s*}}/g, sendMessageForm.values.msgBody || "");
+        }
         return `Dear Parent, ${getRouteLabel(previewRoute)} (${getVehicleLabel(previewRoute)}) is delayed by ${sendMessageForm.values.delayDuration || "-"} minutes. For assistance, contact the bus attender at ${getAttenderContact(previewRoute)}.`;
-    }, [previewRoute, sendMessageForm.values.delayDuration]);
+    }, [previewRoute, isCustomMessage, sendMessageForm.values.delayDuration, sendMessageForm.values.msgBody]);
 
     const showChannelError = sendMessageForm.submitCount > 0 || Boolean(sendMessageForm.touched.communicationModes);
     const channelError = showChannelError && typeof sendMessageForm.errors.communicationModes === "string"
@@ -83,28 +140,105 @@ const SendMessageModal = ({ toggle }: any) => {
         sendMessageForm.setFieldTouched("communicationModes", true, false);
     };
 
+    const changeMessageTypeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = event.target;
+
+        sendMessageForm.setValues((prev: any) => ({
+            ...prev,
+            messageType: value,
+            delayDuration: value === MESSAGE_TYPES.delay ? prev.delayDuration : "",
+            title: value === MESSAGE_TYPES.custom ? prev.title : "",
+            msgBody: value === MESSAGE_TYPES.custom ? prev.msgBody : "",
+        }));
+        sendMessageForm.setTouched({ communicationModes: sendMessageForm.touched.communicationModes }, false);
+    };
+
     return (
         <form onSubmit={sendMessageForm.handleSubmit}>
             <div className="tw-card tw-shadow-none tw-mb-0 tw-border-0">
-                <div className="tw-card-body">
+                <div className="tw-card-body tw-max-h-[70vh] tw-overflow-auto">
                     <div className="tw-grid tw-grid-cols-12 tw-gap-3">
+                        <div className="tw-col-span-12">
+                            <RadioInputContainer
+                                name="messageType"
+                                labelText="Message Type"
+                                labelClassName="required"
+                                value={sendMessageForm.values.messageType}
+                                onChange={changeMessageTypeHandler}
+                                radioOptions={messageTypeOptions}
+                                inputContainerClassName="tw-flex-col lg:tw-flex-row tw-gap-2 lg:tw-gap-6"
+                                formgroupClassName="tw-mb-0"
+                            />
+                        </div>
+
                         <div className="tw-col-span-12 lg:tw-col-span-7">
                             <div className="tw-grid tw-grid-cols-12 tw-gap-3">
-                                <div className="tw-col-span-12">
-                                    <TextInput
-                                        name="delayDuration"
-                                        labelText="Delay Duration"
-                                        labelClass="required"
-                                        value={sendMessageForm.values.delayDuration}
-                                        onChange={sendMessageForm.handleChange}
-                                        onBlur={sendMessageForm.handleBlur}
-                                        inputType="number"
-                                        inputClassName="bg-soft-light"
-                                        placeHolder="Enter delay in minutes"
-                                        invalid={sendMessageForm.touched.delayDuration && sendMessageForm.errors.delayDuration ? true : false}
-                                        error={sendMessageForm.touched.delayDuration && sendMessageForm.errors.delayDuration ? sendMessageForm.errors.delayDuration : ""}
-                                    />
-                                </div>
+                                {isCustomMessage ? (
+                                    <>
+                                        <div className="tw-col-span-12">
+                                            <TextInput
+                                                name="title"
+                                                labelText="Title"
+                                                labelClass="required"
+                                                value={sendMessageForm.values.title}
+                                                onChange={sendMessageForm.handleChange}
+                                                onBlur={sendMessageForm.handleBlur}
+                                                inputClassName="bg-soft-light"
+                                                placeHolder="Enter title"
+                                                invalid={sendMessageForm.touched.title && sendMessageForm.errors.title ? true : false}
+                                                error={sendMessageForm.touched.title && sendMessageForm.errors.title ? sendMessageForm.errors.title : ""}
+                                            />
+                                        </div>
+
+                                        <div className="tw-col-span-12">
+                                            <SelectInput
+                                                name="mediaType"
+                                                labelText="Media Type"
+                                                labelClass="required"
+                                                value={sendMessageForm.values.mediaType}
+                                                menuItems={mediaTypeOptions}
+                                                valueKey="id"
+                                                textKey="name"
+                                                hideSelectOption
+                                                isDisabled
+                                                inputClassName="bg-soft-light"
+                                            />
+                                        </div>
+
+                                        <div className="tw-col-span-12">
+                                            <TextArea
+                                                name="msgBody"
+                                                labelText="Description"
+                                                labelClass="required"
+                                                placeHolder="Enter Description"
+                                                height="160px"
+                                                maxLength={900}
+                                                showRemainingChars
+                                                value={sendMessageForm.values.msgBody}
+                                                onChange={sendMessageForm.handleChange}
+                                                onBlur={sendMessageForm.handleBlur}
+                                                invalid={sendMessageForm.touched.msgBody && sendMessageForm.errors.msgBody ? true : false}
+                                                error={sendMessageForm.touched.msgBody && sendMessageForm.errors.msgBody ? sendMessageForm.errors.msgBody : ""}
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="tw-col-span-12">
+                                        <TextInput
+                                            name="delayDuration"
+                                            labelText="Delay Duration"
+                                            labelClass="required"
+                                            value={sendMessageForm.values.delayDuration}
+                                            onChange={sendMessageForm.handleChange}
+                                            onBlur={sendMessageForm.handleBlur}
+                                            inputType="number"
+                                            inputClassName="bg-soft-light"
+                                            placeHolder="Enter delay in minutes"
+                                            invalid={sendMessageForm.touched.delayDuration && sendMessageForm.errors.delayDuration ? true : false}
+                                            error={sendMessageForm.touched.delayDuration && sendMessageForm.errors.delayDuration ? sendMessageForm.errors.delayDuration : ""}
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="tw-col-span-12">
                                     <div className="mb-3">
@@ -180,14 +314,16 @@ const SendMessageModal = ({ toggle }: any) => {
                             <div className="tw-p-4 tw-h-full">
                                 <div className="tw-flex tw-items-center tw-justify-between">
                                     <div className="tw-text-sm tw-font-semibold tw-text-gray-800">Message Preview</div>
-                                    <div className="tw-text-xs tw-text-gray-500">4 Variables</div>
+                                    <div className="tw-text-xs tw-text-gray-500">{isCustomMessage ? 2 : 4} Variables</div>
                                 </div>
 
                                 <div className="tw-mt-3 tw-grid tw-grid-cols-2 tw-gap-2">
-                                    <div className="tw-rounded-md tw-bg-white tw-p-2 tw-text-xs tw-shadow-sm tw-border">
-                                        <div className="tw-text-gray-500">Delay</div>
-                                        <div className="tw-font-semibold tw-text-gray-800">{sendMessageForm.values.delayDuration || "-"} Min</div>
-                                    </div>
+                                    {!isCustomMessage && (
+                                        <div className="tw-rounded-md tw-bg-white tw-p-2 tw-text-xs tw-shadow-sm tw-border">
+                                            <div className="tw-text-gray-500">Delay</div>
+                                            <div className="tw-font-semibold tw-text-gray-800">{sendMessageForm.values.delayDuration || "-"} Min</div>
+                                        </div>
+                                    )}
                                     <div className="tw-rounded-md tw-bg-white tw-p-2 tw-text-xs tw-shadow-sm tw-border">
                                         <div className="tw-text-gray-500">Route</div>
                                         <div className="tw-font-semibold tw-text-gray-800">{getRouteLabel(previewRoute)}</div>
@@ -196,10 +332,12 @@ const SendMessageModal = ({ toggle }: any) => {
                                         <div className="tw-text-gray-500">Bus</div>
                                         <div className="tw-font-semibold tw-text-gray-800">{getVehicleLabel(previewRoute)}</div>
                                     </div>
-                                    <div className="tw-rounded-md tw-bg-white tw-p-2 tw-text-xs tw-shadow-sm tw-border">
-                                        <div className="tw-text-gray-500">Attender</div>
-                                        <div className="tw-font-semibold tw-text-gray-800">{getAttenderContact(previewRoute)}</div>
-                                    </div>
+                                    {!isCustomMessage && (
+                                        <div className="tw-rounded-md tw-bg-white tw-p-2 tw-text-xs tw-shadow-sm tw-border">
+                                            <div className="tw-text-gray-500">Attender</div>
+                                            <div className="tw-font-semibold tw-text-gray-800">{getAttenderContact(previewRoute)}</div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="tw-mt-4 tw-rounded-[24px] tw-border tw-border-gray-200 tw-bg-white tw-p-3 tw-shadow-sm">
@@ -208,7 +346,7 @@ const SendMessageModal = ({ toggle }: any) => {
                                         <span>School Transport</span>
                                     </div>
                                     <div className="tw-rounded-b-[18px] tw-bg-[#e8f5e9] tw-p-3 tw-text-sm tw-leading-6 tw-text-gray-800">
-                                        {messagePreview}
+                                        <div className="tw-whitespace-pre-wrap tw-break-words">{messagePreview}</div>
                                         <div className="tw-mt-2 tw-text-right tw-text-[11px] tw-text-gray-500">10:32 AM</div>
                                     </div>
                                 </div>
