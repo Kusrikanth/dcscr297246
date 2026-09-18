@@ -15,6 +15,10 @@ export const feeTypes = [
   {
     id: "TRANSPORT FEE",
     name: "Transport Fee"
+  },
+  {
+    id: "BOTH",
+    name: "Both"
   }
 ]
 
