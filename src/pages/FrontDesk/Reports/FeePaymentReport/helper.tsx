@@ -729,3 +729,307 @@ export function renderClassValue(selectedItems: any) {
     }
 }
 
+
+/* ------------------------------------------------------------------ *
+ *  Fee collection vs receivable trend (bar + line chart)
+ * ------------------------------------------------------------------ */
+
+export type IFeeTrendPeriodId = "DAY" | "WEEK" | "MONTH";
+
+export const feeTrendPeriodOptions = [
+    { id: "DAY", labelName: "Day", customPadding: "0px 0px 0px 0px" },
+    { id: "WEEK", labelName: "Week", customPadding: "0px 0px 0px 0px" },
+    { id: "MONTH", labelName: "Month", customPadding: "0px 0px 0px 0px" },
+];
+
+export const feeTrendColors = {
+    academic: "#405189",
+    transport: "#0AB39C",
+    overall: "#F06530",
+};
+
+// Unit shown beside the "Last N" input, per granularity.
+export const feeTrendPeriodUnitLabel: Record<IFeeTrendPeriodId, string> = {
+    DAY: "Days",
+    WEEK: "Weeks",
+    MONTH: "Months",
+};
+
+// How many trailing buckets the chart opens with, before the user changes it.
+export const feeTrendDefaultCount: Record<IFeeTrendPeriodId, number> = {
+    DAY: 14,
+    WEEK: 12,
+    MONTH: 12,
+};
+
+// Upper bound on the "Last N" input — beyond this the bars become unreadable slivers.
+export const feeTrendMaxCount: Record<IFeeTrendPeriodId, number> = {
+    DAY: 60,
+    WEEK: 52,
+    MONTH: 36,
+};
+
+export function clampFeeTrendCount(period: IFeeTrendPeriodId, value: any) {
+    const maxCount = feeTrendMaxCount[period] || 24;
+    const numericValue = Math.floor(Number(value));
+    if (!numericValue || isNaN(numericValue) || numericValue < 1) {
+        return 1;
+    }
+    return Math.min(numericValue, maxCount);
+}
+
+// No backend endpoint exposes receivable-vs-collected by period yet, so the
+// chart runs on generated fixtures. Flip this off once the API is wired in.
+export const USE_SAMPLE_FEE_COLLECTION_TREND = true;
+
+export interface IFeeTrendDailyRow {
+    date: string;
+    academicReceivable: number;
+    academicCollected: number;
+    transportReceivable: number;
+    transportCollected: number;
+}
+
+export interface IFeeTrendBucket extends IFeeTrendDailyRow {
+    label: string;
+    rangeLabel: string;
+    totalReceivable: number;
+    totalCollected: number;
+    academicPercent: number;
+    transportPercent: number;
+    totalPercent: number;
+}
+
+function toValidDate(value: any) {
+    if (!value) {
+        return null;
+    }
+    const dateValue = new Date(value);
+    return isNaN(dateValue.getTime()) ? null : dateValue;
+}
+
+function startOfDay(inputDate: Date) {
+    return new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
+}
+
+function addDays(inputDate: Date, days: number) {
+    const dateValue = new Date(inputDate);
+    dateValue.setDate(dateValue.getDate() + days);
+    return dateValue;
+}
+
+// Monday as the first day of the week.
+function startOfWeek(inputDate: Date) {
+    const dateValue = startOfDay(inputDate);
+    const weekDay = (dateValue.getDay() + 6) % 7;
+    return addDays(dateValue, -weekDay);
+}
+
+function startOfMonth(inputDate: Date) {
+    return new Date(inputDate.getFullYear(), inputDate.getMonth(), 1);
+}
+
+function toDateKey(inputDate: Date) {
+    const month = `${inputDate.getMonth() + 1}`.padStart(2, "0");
+    const day = `${inputDate.getDate()}`.padStart(2, "0");
+    return `${inputDate.getFullYear()}-${month}-${day}`;
+}
+
+const feeTrendMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function toDayLabel(inputDate: Date) {
+    return `${`${inputDate.getDate()}`.padStart(2, "0")} ${feeTrendMonthNames[inputDate.getMonth()]}`;
+}
+
+function toFullDayLabel(inputDate: Date) {
+    return `${toDayLabel(inputDate)} ${inputDate.getFullYear()}`;
+}
+
+function toPercent(collected: number, receivable: number) {
+    if (!receivable || receivable <= 0) {
+        return 0;
+    }
+    return Number(((collected / receivable) * 100).toFixed(1));
+}
+
+// Stable hash so the fixtures do not jitter between renders. The avalanche step
+// keeps consecutive dates from landing on near-identical values.
+function feeTrendSeed(key: string) {
+    let hash = 2166136261;
+    for (let index = 0; index < key.length; index++) {
+        hash ^= key.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    hash ^= hash >>> 15;
+    hash = Math.imul(hash, 2246822507);
+    hash ^= hash >>> 13;
+    hash = Math.imul(hash, 3266489909);
+    hash = (hash ^ (hash >>> 16)) >>> 0;
+    return hash / 4294967296;
+}
+
+export function buildSampleFeeCollectionTrend(fromDate: Date, toDate: Date): Array<IFeeTrendDailyRow> {
+    const rows: Array<IFeeTrendDailyRow> = [];
+    let cursor = startOfDay(fromDate);
+    const lastDate = startOfDay(toDate);
+    while (cursor <= lastDate) {
+        const dateKey = toDateKey(cursor);
+        // Collections dip on Sundays, so keep the fixture shaped like a real week.
+        const weekendFactor = cursor.getDay() === 0 ? 0.35 : 1;
+        const academicReceivable = Math.round((180000 + feeTrendSeed(`ar-${dateKey}`) * 220000) / 100) * 100;
+        const transportReceivable = Math.round((45000 + feeTrendSeed(`tr-${dateKey}`) * 75000) / 100) * 100;
+        const academicCollected = Math.round(
+            academicReceivable * (0.52 + feeTrendSeed(`ac-${dateKey}`) * 0.4) * weekendFactor
+        );
+        const transportCollected = Math.round(
+            transportReceivable * (0.45 + feeTrendSeed(`tc-${dateKey}`) * 0.45) * weekendFactor
+        );
+        rows.push({
+            date: dateKey,
+            academicReceivable,
+            academicCollected,
+            transportReceivable,
+            transportCollected,
+        });
+        cursor = addDays(cursor, 1);
+    }
+    return rows;
+}
+
+/**
+ * Window the chart plots: the last `count` buckets of the selected academic year.
+ * The window ends at the year's end date, or today when the year is still running,
+ * and never reaches back past the year's start date.
+ */
+export function getFeeCollectionTrendRange(
+    period: IFeeTrendPeriodId,
+    count: number,
+    academicYearStartDate?: any,
+    academicYearEndDate?: any
+) {
+    const today = startOfDay(new Date());
+    const yearStartDate = toValidDate(academicYearStartDate);
+    const yearEndDate = toValidDate(academicYearEndDate);
+    const bucketCount = clampFeeTrendCount(period, count);
+
+    // A year still in progress has no data beyond today; a closed year stops at its end date.
+    const toDate = yearEndDate && startOfDay(yearEndDate) < today ? startOfDay(yearEndDate) : today;
+
+    let fromDate;
+    if (period === "DAY") {
+        fromDate = addDays(toDate, -(bucketCount - 1));
+    } else if (period === "WEEK") {
+        fromDate = addDays(startOfWeek(toDate), -7 * (bucketCount - 1));
+    } else {
+        fromDate = new Date(toDate.getFullYear(), toDate.getMonth() - (bucketCount - 1), 1);
+    }
+
+    if (yearStartDate && fromDate < startOfDay(yearStartDate)) {
+        fromDate = startOfDay(yearStartDate);
+    }
+    // The selected year has not started yet — nothing to plot.
+    const isEmptyRange = fromDate > toDate;
+    return { fromDate, toDate, bucketCount, isEmptyRange };
+}
+
+export function aggregateFeeCollectionTrend(
+    dailyRows: Array<IFeeTrendDailyRow>,
+    period: IFeeTrendPeriodId,
+    maxBuckets?: number
+): Array<IFeeTrendBucket> {
+    if (!Array.isArray(dailyRows) || dailyRows.length === 0) {
+        return [];
+    }
+    const bucketMap = new Map<string, any>();
+    dailyRows.forEach((row) => {
+        const rowDate = toValidDate(row?.date);
+        if (!rowDate) {
+            return;
+        }
+        let bucketStart;
+        if (period === "WEEK") {
+            bucketStart = startOfWeek(rowDate);
+        } else if (period === "MONTH") {
+            bucketStart = startOfMonth(rowDate);
+        } else {
+            bucketStart = startOfDay(rowDate);
+        }
+        const bucketKey = toDateKey(bucketStart);
+        const bucket = bucketMap.get(bucketKey) || {
+            date: bucketKey,
+            bucketStart,
+            bucketEnd: startOfDay(rowDate),
+            academicReceivable: 0,
+            academicCollected: 0,
+            transportReceivable: 0,
+            transportCollected: 0,
+        };
+        bucket.bucketEnd = startOfDay(rowDate) > bucket.bucketEnd ? startOfDay(rowDate) : bucket.bucketEnd;
+        bucket.academicReceivable += Number(row?.academicReceivable) || 0;
+        bucket.academicCollected += Number(row?.academicCollected) || 0;
+        bucket.transportReceivable += Number(row?.transportReceivable) || 0;
+        bucket.transportCollected += Number(row?.transportCollected) || 0;
+        bucketMap.set(bucketKey, bucket);
+    });
+
+    const bucketLimit = clampFeeTrendCount(period, maxBuckets || feeTrendMaxCount[period]);
+    return Array.from(bucketMap.values())
+        .sort((first, second) => first.bucketStart - second.bucketStart)
+        .slice(-bucketLimit)
+        .map((bucket) => {
+            const { bucketStart, bucketEnd } = bucket;
+            let label, rangeLabel;
+            if (period === "MONTH") {
+                label = `${feeTrendMonthNames[bucketStart.getMonth()]} ${`${bucketStart.getFullYear()}`.slice(-2)}`;
+                rangeLabel = `${feeTrendMonthNames[bucketStart.getMonth()]} ${bucketStart.getFullYear()}`;
+            } else if (period === "WEEK") {
+                label = toDayLabel(bucketStart);
+                rangeLabel = `${toDayLabel(bucketStart)} - ${toFullDayLabel(bucketEnd)}`;
+            } else {
+                label = toDayLabel(bucketStart);
+                rangeLabel = toFullDayLabel(bucketStart);
+            }
+            const totalReceivable = bucket.academicReceivable + bucket.transportReceivable;
+            const totalCollected = bucket.academicCollected + bucket.transportCollected;
+            return {
+                date: bucket.date,
+                label,
+                rangeLabel,
+                academicReceivable: bucket.academicReceivable,
+                academicCollected: bucket.academicCollected,
+                transportReceivable: bucket.transportReceivable,
+                transportCollected: bucket.transportCollected,
+                totalReceivable,
+                totalCollected,
+                academicPercent: toPercent(bucket.academicCollected, bucket.academicReceivable),
+                transportPercent: toPercent(bucket.transportCollected, bucket.transportReceivable),
+                totalPercent: toPercent(totalCollected, totalReceivable),
+            };
+        });
+}
+
+export function getFeeCollectionTrendTotals(buckets: Array<IFeeTrendBucket>) {
+    const totals = (Array.isArray(buckets) ? buckets : []).reduce((accumulator, bucket) => {
+        accumulator.academicReceivable += bucket?.academicReceivable || 0;
+        accumulator.academicCollected += bucket?.academicCollected || 0;
+        accumulator.transportReceivable += bucket?.transportReceivable || 0;
+        accumulator.transportCollected += bucket?.transportCollected || 0;
+        return accumulator;
+    }, {
+        academicReceivable: 0,
+        academicCollected: 0,
+        transportReceivable: 0,
+        transportCollected: 0,
+    });
+    const totalReceivable = totals.academicReceivable + totals.transportReceivable;
+    const totalCollected = totals.academicCollected + totals.transportCollected;
+    return {
+        ...totals,
+        totalReceivable,
+        totalCollected,
+        academicPercent: toPercent(totals.academicCollected, totals.academicReceivable),
+        transportPercent: toPercent(totals.transportCollected, totals.transportReceivable),
+        totalPercent: toPercent(totalCollected, totalReceivable),
+    };
+}

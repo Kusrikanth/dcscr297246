@@ -9,6 +9,7 @@ import BreadCrumb from "../../../../Components/Common/BreadCrumb";
 import TableContainer from "../../../../Components/Common/TableContainer";
 import { getAppliedFilterCount } from "./helper";
 import StatusCard from "./StatusCard";
+import FeeCollectionTrendChart from "./FeeCollectionTrendChart";
 import { useFormik } from "formik";
 
 import { shallowEqual, useDispatch } from "react-redux";
@@ -432,6 +433,8 @@ export default function FeePaymentReport() {
                     </div>
 
                     <StatusCard paymentModeAmount={getFeeSumAmountListResp} />
+
+                    <FeeCollectionTrendChart academicYearList={academicYearListResp?.data} />
 
                     <div className="tw-bg-white tw-rounded-lg tw-shadow tw-mb-4">
                         <div className="tw-border-b tw-px-4 tw-py-3">

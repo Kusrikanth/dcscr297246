@@ -289,6 +289,14 @@ const ViewConcernFeedback = () => {
         return {};
     }, [parentChildrensResp, currentStudentId]);
 
+    const concernStudentName = concernListById?.studentName || concernListById?.studentFirstName || "";
+    const concernStudentCode = concernListById?.studentCode || concernListById?.studentUserName || "";
+
+    // End user type can arrive as PARENT / PARENT_ROLE depending on how the concern was raised
+    // (by the parent themselves, or by an admin on a parent's behalf).
+    const isParentConcern = `${concernListById?.complaintUserType || ""}`.toUpperCase().includes("PARENT")
+        || !!(concernStudentName || concernStudentCode);
+
     const toggleViewDetailsModal = (modalData?: any) => {
         setAssignEmployeeModalState((prev: any) => ({
             ...prev,
@@ -722,6 +730,22 @@ const ViewConcernFeedback = () => {
                                         </div>
                                     </div>
                                 </div>
+                                {isParentConcern && (
+                                    <div className='tw-border-t tw-p-4'>
+                                        <div className='tw-grid tw-grid-cols-12 tw-gap-2'>
+                                            <div className='tw-col-span-4'>Student</div>
+                                            <div className='tw-col-span-8 tw-flex tw-w-full tw-overflow-hidden'>
+                                                <span className='tw-mr-3'>:</span>
+                                                <UserDetails
+                                                    displayName={concernStudentName || "-"}
+                                                    displayId={concernStudentCode || "-"}
+                                                    showAvatar={false}
+                                                    mainDivClass='tw-overflow-hidden'
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className='tw-border-t tw-p-4'>
                                     <div className='tw-grid tw-grid-cols-12 tw-gap-2'>
                                         <div className='tw-col-span-4'>Assignees</div>
@@ -733,6 +757,7 @@ const ViewConcernFeedback = () => {
                                 </div>
                                 {loggedInUserRole === "PARENT_ROLE" && (
                                     <>
+                                        {!isParentConcern && (
                                         <div className="tw-border-t tw-p-4">
                                             <div className="tw-grid tw-grid-cols-12 tw-gap-2">
                                                 <div className="tw-col-span-4">Student Name</div>
@@ -756,6 +781,7 @@ const ViewConcernFeedback = () => {
                                                 </div>
                                             </div>
                                         </div>
+                                        )}
 
                                         <div className="tw-border-t tw-p-4">
                                             <div className="tw-grid tw-grid-cols-12 tw-gap-2">
