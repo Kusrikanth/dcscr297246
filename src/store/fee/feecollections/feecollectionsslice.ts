@@ -76,6 +76,7 @@ const initialState: IFeeCollectionsReducerState = {
     getStuForFeeAdjustResp: undefined,
     classListForAdvanceFilter: undefined,
     deleteLedgerDetailResp: undefined,
+    updateLedgerDetailsResp: undefined,
     feeLedgersConcessionResp: undefined,
     paymentActiveDetailsResp: undefined,
     paymentActiveDetailsByIdResp: undefined,
@@ -306,6 +307,9 @@ export const masterFeeSettings = createSlice({
         setDeleteLedgerDetailAct: (state, action: PayloadAction<any>) => {
             state.deleteLedgerDetailResp = action.payload;
         },
+        setUpdateLedgerDetailsAct: (state, action: PayloadAction<any>) => {
+            state.updateLedgerDetailsResp = action.payload;
+        },
         setFeeLedgersConcessionAct: (state, action: PayloadAction<any>) => {
             state.feeLedgersConcessionResp = action.payload;
         },
@@ -380,7 +384,7 @@ export const {
     setProcessCcavenueDummyPaymentAct,
     setSpecialFeePayDetailsAct,
     setSpecialFeeLedgersAct,
-    setCreateFeeReversalAct, setFeeReversalsAct, setExportFeeReversalAct, setDeleteLedgerDetailAct,
+    setCreateFeeReversalAct, setFeeReversalsAct, setExportFeeReversalAct, setDeleteLedgerDetailAct, setUpdateLedgerDetailsAct,
     setFeeLedgersConcessionAct, setPaymentActiveDetailsAct, setPaymentActiveDetailsByIdAct,
     setExportActivePaymentDetailsAct,
     setStuForFeeAdjustAct, setSpecialFeeReceiptsAct,

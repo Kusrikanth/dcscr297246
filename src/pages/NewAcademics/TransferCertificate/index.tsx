@@ -7,7 +7,8 @@ import {
 } from "./transferCertificateTypes";
 import {
   advanceFilterKeys,
-  generateColumns, statusTypes
+  generateColumns, statusTypes,
+  SAMPLE_TC_REVERT_LEDGER_COUNT
 } from "./helper";
 import TableContainer from "../../../Components/Common/TableContainer";
 import OfflineTransferCertificateModal from "./OfflineTransferCertificateModal";
@@ -40,6 +41,13 @@ import { searchInputOptions } from "../../Directory/StudentManagement/helper";
 import DepartmentConfirmationModal from "./DepartmentConfirmationModal";
 import Button from "../../../Components/Common/Button";
 import ExportModal from "../../Directory/StudentManagement/ExportModal";
+import TcAttendanceCheckModal from "./TcAttendanceCheckModal";
+import TcRevertAuthModal from "./TcRevertAuthModal";
+import {
+  addRevertedTcRecord,
+  getPreviousAcademicYear,
+  useRevertedTcRecords,
+} from "../../../utility/tcrevertutility";
 
 const initialValues: TransferCertificateFilterhProps = {
   search: "",
@@ -76,6 +84,12 @@ const TransferCertificate = () => {
   } = useModal();
   const { modalState: digitalSignedBonafideCumModalState, closeModal: closeDigitalSignBonafideCumModalHndlr,
     openModal: openDigitalSignBonafideCumModalHndlr
+  } = useModal();
+  const { modalState: tcAttendanceCheckState, closeModal: closeTcAttendanceCheckHndlr,
+    openModal: openTcAttendanceCheckHndlr
+  } = useModal();
+  const { modalState: tcRevertAuthState, closeModal: closeTcRevertAuthHndlr,
+    openModal: openTcRevertAuthHndlr
   } = useModal();
   const [
     offlineTransferCertificateModalState,
@@ -167,6 +181,48 @@ const TransferCertificate = () => {
       && loggedInUserRole !== 'VICE_PRINCIPAL' && loggedInUserRole !== 'HOD')
   }, [loggedInUserRole]);
 
+  const revertedTcRecords = useRevertedTcRecords();
+
+  const { selectedAcademicYearName, previousAcademicYear } = useMemo(() => {
+    const academicYears = academicYearListResp?.data;
+    const { academicYearId } = transferCertificateFilterState;
+    const selectedYear = academicYears?.find((year: any) => `${year?.academicYearId}` === `${academicYearId}`);
+    return {
+      selectedAcademicYearName: selectedYear?.academicYearName || "",
+      previousAcademicYear: getPreviousAcademicYear(academicYears, academicYearId),
+    };
+  }, [academicYearListResp, transferCertificateFilterState.academicYearId]);
+
+  // A reverted request no longer belongs to the year it was raised in, so it is dropped from that
+  // year's list and shown under the academic year it was reverted to.
+  const displayedTcRequestList = useMemo(() => {
+    const selectedYearId = `${transferCertificateFilterState.academicYearId}`;
+    const revertedTcIds = revertedTcRecords.map((record) => `${record.tcId}`);
+    const rowsForYear = (tcRequestList?.data || []).filter((row: any) => !revertedTcIds.includes(`${row.tcId}`));
+    const revertedRowsForYear = revertedTcRecords
+      .filter((record) => `${record.revertedAcademicYearId}` === selectedYearId)
+      .map((record) => ({
+        tcId: record.tcId,
+        tcNumber: record.tcNumber,
+        tcApplicationDate: record.tcApplicationDate,
+        student: {
+          studentId: record.studentId,
+          studentName: record.studentName,
+          studentCode: record.studentCode,
+        },
+        curriculumName: record.curriculumName,
+        className: record.className,
+        sectionName: record.sectionName,
+        requestType: record.requestType,
+        lastAttendanceDate: record.lastAttendanceDate,
+        deptApprovedStatus: "PENDING",
+        tcRequestStatus: "Yet to prepare",
+        hostelExitStatus: false,
+        cancelRemarks: record.revertRemarks,
+        createdAt: record.revertedAt,
+      }));
+    return [...revertedRowsForYear, ...rowsForYear];
+  }, [tcRequestList, revertedTcRecords, transferCertificateFilterState.academicYearId]);
 
   const getTcRequestListResponse = (otherProps?: any) => {
     const payload = {
@@ -419,10 +475,8 @@ const TransferCertificate = () => {
         actionName: "Prepare Certificate",
         onClickHndlr: (event: any) => {
           const id = event.currentTarget.getAttribute('data-id');
-          setCertificateIssuaModalState(prevState => ({
-            ...prevState, showModal: true,
-            tcId: id, mode: 'ADD'
-          }))
+          const tcRecord = displayedTcRequestList.find((item: any) => `${item.tcId}` === `${id}`);
+          openTcAttendanceCheckHndlr({ tcId: id, tcRecord });
         },
       },
       {
@@ -466,7 +520,7 @@ const TransferCertificate = () => {
         }
       }
     ],
-    [tcRequestList]
+    [tcRequestList, displayedTcRequestList]
   );
 
   const CancelHandler = (remarks?: string) => {
@@ -490,6 +544,54 @@ const TransferCertificate = () => {
       dispatch(getDepartMentApprovalAct(generateActionPayload('department_tc_approval',{tcRequestId: tcDepartmentApproval.modalData },undefined)))
     }
   }
+  function studentAttendedHndlr() {
+    const { tcId } = tcAttendanceCheckState?.modalData || {};
+    closeTcAttendanceCheckHndlr();
+    setCertificateIssuaModalState(prevState => ({
+      ...prevState, showModal: true,
+      tcId: tcId, mode: 'ADD'
+    }));
+  }
+
+  function studentNotAttendedHndlr() {
+    if (!previousAcademicYear) {
+      toast.error(`No academic year exists before ${selectedAcademicYearName}. This TC request cannot be reverted.`);
+      return;
+    }
+    const { modalData } = tcAttendanceCheckState || {};
+    closeTcAttendanceCheckHndlr();
+    openTcRevertAuthHndlr(modalData);
+  }
+
+  function revertTcRequestHndlr({ remarks }: { remarks: string }) {
+    const { tcRecord } = tcRevertAuthState?.modalData || {};
+    const { academicYearId: revertedAcademicYearId, academicYearName: revertedAcademicYearName } = previousAcademicYear || {};
+    // TODO: call the revert TC API here once it exists. It should delete the current academic year
+    // ledgers and move the request back to the previous academic year.
+    addRevertedTcRecord({
+      tcId: `${tcRecord?.tcId}`,
+      tcNumber: tcRecord?.tcNumber,
+      studentId: tcRecord?.student?.studentId ?? tcRecord?.studentId,
+      studentCode: tcRecord?.student?.studentCode,
+      studentName: tcRecord?.student?.studentName,
+      curriculumName: tcRecord?.curriculumName,
+      className: tcRecord?.className,
+      sectionName: tcRecord?.sectionName,
+      requestType: tcRecord?.requestType,
+      tcApplicationDate: tcRecord?.tcApplicationDate,
+      lastAttendanceDate: tcRecord?.lastAttendanceDate,
+      fromAcademicYearId: `${transferCertificateFilterState.academicYearId}`,
+      fromAcademicYearName: selectedAcademicYearName,
+      revertedAcademicYearId: `${revertedAcademicYearId}`,
+      revertedAcademicYearName: revertedAcademicYearName,
+      deletedLedgerCount: SAMPLE_TC_REVERT_LEDGER_COUNT,
+      revertRemarks: remarks,
+      revertedAt: new Date().toISOString(),
+    });
+    closeTcRevertAuthHndlr();
+    toast.success(`${selectedAcademicYearName} ledgers deleted. TC request reverted to ${revertedAcademicYearName} and listed in Fee Approvals under ${revertedAcademicYearName}.`);
+  }
+
   const EmailNotificationHandler = () => {
     let params = { tcRequestId: emailConfirmationModalState.tcId }
     let payload = ['EMAIL']
@@ -677,7 +779,7 @@ const TransferCertificate = () => {
 
   const { data: academicYearList } = academicYearListResp || {};
   const { data: curriculumTypes } = brchCurriculumResp || {};
-  const { data: TcRequestList, totalElements, totalPages, pageNumber } = tcRequestList || {};
+  const { totalElements, totalPages, pageNumber } = tcRequestList || {};
   const { content: classTypes } = branchClassResp || {};
   const roleColumns = useMemo(() => {
     const columns = generateColumns(menuOptions, toggleApprovalStatusModal);
@@ -685,7 +787,7 @@ const TransferCertificate = () => {
       return columns.filter(item => item?.accessor !== "actions")
     }
     return columns;
-  }, [canCreateAndUpdate, tcRequestList]);
+  }, [canCreateAndUpdate, tcRequestList, displayedTcRequestList]);
 
   return (
     <>
@@ -857,7 +959,7 @@ const TransferCertificate = () => {
 
               <TableContainer
                 columns={roleColumns}
-                data={TcRequestList || []}
+                data={displayedTcRequestList}
                 divClass="tw-overflow-x-auto tw-mb-3"
                 theadClass="tw-bg-gray-100 tw-text-gray-600 tw-align-middle"
                 showPagination={true}
@@ -1089,6 +1191,43 @@ const TransferCertificate = () => {
         iconType='approve'
         btnClassName='btn w-sm btn-success'
       />
+      <ModalContainerUpdated
+        id="tc-attendance-check-modal"
+        isOpen={tcAttendanceCheckState.showModal}
+        toggle={closeTcAttendanceCheckHndlr}
+        modalTitle="Attendance Confirmation"
+        modalSize="md"
+      >
+        <TcAttendanceCheckModal
+          academicYearName={selectedAcademicYearName}
+          previousAcademicYearName={previousAcademicYear?.academicYearName}
+          studentName={tcAttendanceCheckState?.modalData?.tcRecord?.student?.studentName}
+          studentCode={tcAttendanceCheckState?.modalData?.tcRecord?.student?.studentCode}
+          className={tcAttendanceCheckState?.modalData?.tcRecord?.className}
+          sectionName={tcAttendanceCheckState?.modalData?.tcRecord?.sectionName}
+          attendedHndlr={studentAttendedHndlr}
+          notAttendedHndlr={studentNotAttendedHndlr}
+          closeHndlr={closeTcAttendanceCheckHndlr}
+        />
+      </ModalContainerUpdated>
+      <ModalContainerUpdated
+        id="tc-revert-auth-modal"
+        isOpen={tcRevertAuthState.showModal}
+        toggle={closeTcRevertAuthHndlr}
+        modalTitle="Revert TC Request"
+        modalSize="md"
+      >
+        <TcRevertAuthModal
+          academicYearName={selectedAcademicYearName}
+          previousAcademicYearName={previousAcademicYear?.academicYearName}
+          studentName={tcRevertAuthState?.modalData?.tcRecord?.student?.studentName}
+          studentCode={tcRevertAuthState?.modalData?.tcRecord?.student?.studentCode}
+          ledgerCount={SAMPLE_TC_REVERT_LEDGER_COUNT}
+          isDisabled={showApiLoader}
+          submitHndlr={revertTcRequestHndlr}
+          closeHndlr={closeTcRevertAuthHndlr}
+        />
+      </ModalContainerUpdated>
       <ModalContainerUpdated
         id="tc-certificate-export"
         isOpen={exportExcelState.showModal}

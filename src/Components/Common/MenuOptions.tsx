@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   UncontrolledTooltip,
-  UncontrolledDropdown,
+  Dropdown,
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
@@ -13,6 +13,8 @@ export interface IOptionsHrtl {
   actionName: string | React.ReactNode;
   onClickHndlr?: any;
   disabled?: boolean;
+  /** Nested actions, shown as an expandable sub menu inside the more actions dropdown. */
+  subActions?: Array<IOptionsHrtl>;
 }
 
 export interface IMenuOptionHrtl {
@@ -66,10 +68,24 @@ export const MoreActions = ({
   isHorizontal = false,
   menuIconClassName = "tw-text-gray-500",
 }: IMoreActions) => {
+  const [isOpenState, setIsOpenState] = useState<boolean>(false);
+  const [expandedActionIdState, setExpandedActionIdState] = useState<string>("");
 
+  function toggleDropdownHndlr() {
+    setIsOpenState((prevState) => {
+      if (prevState) {
+        setExpandedActionIdState("");
+      }
+      return !prevState;
+    });
+  }
+
+  function toggleSubActionsHndlr(actionId: string) {
+    setExpandedActionIdState((prevState) => (prevState === actionId ? "" : actionId));
+  }
 
   return (
-    <UncontrolledDropdown direction="start">
+    <Dropdown isOpen={isOpenState} toggle={toggleDropdownHndlr} direction="start">
       <DropdownToggle tag="a" id={`action-${rowId}`} role="button">
         <i
           className={classnames(`fs-17 ${menuIconClassName}`, {
@@ -79,18 +95,58 @@ export const MoreActions = ({
         ></i>
       </DropdownToggle>
       <DropdownMenu>
-        {actionOptions.map((item) => (
-          <DropdownItem
-            data-id={rowId}
-            onClick={item.onClickHndlr}
-            key={`${item.id}${rowId}`}
-          >
-            <div className="tw-flex tw-items-center">
-              {item.actionIcon} {item.actionName}
-            </div>
-          </DropdownItem>
-        ))}
+        {actionOptions.map((item) => {
+          const hasSubActions = Array.isArray(item.subActions) && item.subActions.length > 0;
+          if (!hasSubActions) {
+            return (
+              <DropdownItem
+                data-id={rowId}
+                onClick={item.onClickHndlr}
+                key={`${item.id}${rowId}`}
+              >
+                <div className="tw-flex tw-items-center">
+                  {item.actionIcon} {item.actionName}
+                </div>
+              </DropdownItem>
+            );
+          }
+          const isExpanded = expandedActionIdState === item.id;
+          return (
+            <React.Fragment key={`${item.id}${rowId}`}>
+              <DropdownItem
+                toggle={false}
+                data-id={rowId}
+                onClick={() => toggleSubActionsHndlr(item.id)}
+              >
+                <div className="tw-flex tw-items-center tw-justify-between">
+                  <span className="tw-flex tw-items-center">
+                    {item.actionIcon} {item.actionName}
+                  </span>
+                  <i
+                    className={classnames("tw-ml-3 tw-text-gray-500", {
+                      "ri-arrow-down-s-line": isExpanded,
+                      "ri-arrow-right-s-line": !isExpanded,
+                    })}
+                  ></i>
+                </div>
+              </DropdownItem>
+              {isExpanded &&
+                (item.subActions || []).map((subItem) => (
+                  <DropdownItem
+                    data-id={rowId}
+                    onClick={subItem.onClickHndlr}
+                    key={`${subItem.id}${rowId}`}
+                    className="tw-pl-6"
+                  >
+                    <div className="tw-flex tw-items-center">
+                      {subItem.actionIcon} {subItem.actionName}
+                    </div>
+                  </DropdownItem>
+                ))}
+            </React.Fragment>
+          );
+        })}
       </DropdownMenu>
-    </UncontrolledDropdown>
+    </Dropdown>
   );
 };

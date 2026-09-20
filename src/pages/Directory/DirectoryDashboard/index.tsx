@@ -7,6 +7,7 @@ import AcademicYearWiseTotal from './AcademicYearWiseTotal';
 import AttandanceReport from './AttendanceReport/AttandanceReport';
 import StrengthBarView from './StrengthBarView';
 import SectionWiseLanguage from './SectionWiseLanguage';
+import StudentStatusAnalysis from './StudentStatusAnalysis';
 import StudentSectionCount from '../../DashBoardBranchSummary/StudentCountSectionWise/StudentSectionCount';
 
 const DirectoryDashboard = () => {
@@ -36,6 +37,10 @@ const DirectoryDashboard = () => {
 
           <div className="tw-col-span-12">
               <SchoolStrengthStatistics />
+          </div>
+
+          <div className="tw-col-span-12">
+              <StudentStatusAnalysis />
           </div>
 
           <div className="tw-col-span-12">

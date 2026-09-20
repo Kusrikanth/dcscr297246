@@ -31,6 +31,8 @@ import { roleTypes } from "../../../../Components/constants/common";
 //Action Modals
 import ChangePassword from "../ActionModals/ChangePassword";
 import DeactivateAccount from "../ActionModals/DeactivateAccount";
+import { useChangeUsername } from "../ActionModals/ChangeUsername";
+import { USE_SAMPLE_MANAGE_USERS, sampleStudentUsers } from "../helper";
 //Common Utility
 import { getSortingKeys } from "../../../../utility/commonutility";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -76,6 +78,14 @@ const Students = ({ instituteId, branchId, showCreateUserModal, closeModalHndlr 
     userManagementErrorResp: userManagement.userManagementErrorResp
   }), shallowEqual);
 
+  //Sample rows, used while the manage user API is not reachable in this environment.
+  const useSampleUsers = USE_SAMPLE_MANAGE_USERS &&
+    !(Array.isArray(getRoleTypeUsersResp?.data) && getRoleTypeUsersResp?.data.length > 0);
+  const usersListData = useSampleUsers ? sampleStudentUsers : getRoleTypeUsersResp?.data;
+
+  //Change Username (Rename / Merge with Existing / Split) actions
+  const changeUsername = useChangeUsername({ usersList: usersListData });
+
   const studentRespRef = useRef<any>({
     prevDeleteRoleTypeUserResp: deleteRoleTypeUserResp,
     prevUserManagementErrorResp: userManagementErrorResp,
@@ -87,7 +97,7 @@ const Students = ({ instituteId, branchId, showCreateUserModal, closeModalHndlr 
       setDelUserModalState((prevState: any) => ({ ...prevState, showModal: false }));
       getStudentsHavingLoginIdApiCall();
       toast.success("Student user id deleted successfully.")
-    } else if (userManagementErrorResp && userManagementErrorResp !== prevUserManagementErrorResp) {
+    } else if (!USE_SAMPLE_MANAGE_USERS && userManagementErrorResp && userManagementErrorResp !== prevUserManagementErrorResp) {
       const { details }: any = userManagementErrorResp;
       toast.error(details);
     }
@@ -159,6 +169,7 @@ const Students = ({ instituteId, branchId, showCreateUserModal, closeModalHndlr 
         actionName: "Change Password",
         onClickHndlr: changePwdHandler
       },
+      changeUsername.menuOption,
       {
         id: "deactivate-user",
         actionIcon: <HugeiconsIcon
@@ -190,7 +201,7 @@ const Students = ({ instituteId, branchId, showCreateUserModal, closeModalHndlr 
         actionName: "Delete",
         onClickHndlr: deleteUserHndlr
       }
-    ], [getRoleTypeUsersResp]);
+    ], [getRoleTypeUsersResp, changeUsername.menuOption]);
 
   const StudentFilterForm = useFormik({
     enableReinitialize: true,
@@ -272,7 +283,7 @@ const Students = ({ instituteId, branchId, showCreateUserModal, closeModalHndlr 
   }
 
   const { data: studentData, totalElements, pageNumber, totalPages } = getRoleTypeUsersResp || {};
-  const roleColumns = useMemo(() => generateColumns(menuOptions), [getRoleTypeUsersResp]);
+  const roleColumns = useMemo(() => generateColumns(menuOptions), [getRoleTypeUsersResp, menuOptions]);
   return (
     <>
       <div className="tw-w-full">
@@ -296,14 +307,14 @@ const Students = ({ instituteId, branchId, showCreateUserModal, closeModalHndlr 
         </form>
         <TableContainer
           columns={roleColumns || []}
-          data={studentData || []}
+          data={changeUsername.applyUsernameChanges(usersListData || [])}
           divClass="tw-overflow-x-auto tw-mb-3"
           theadClass="tw-bg-gray-100 tw-text-gray-600 tw-align-middle"
           showPagination={true}
-          totalPages={totalPages}
-          totalRecords={totalElements}
+          totalPages={useSampleUsers ? 1 : totalPages}
+          totalRecords={useSampleUsers ? sampleStudentUsers.length : totalElements}
           callbackPaginationHndlr={paginationHndlr}
-          currentPageNumber={pageNumber}
+          currentPageNumber={useSampleUsers ? 0 : pageNumber}
           manualSorting={true}
           sortingHandler={sortingHandler}
         />
@@ -365,6 +376,7 @@ const Students = ({ instituteId, branchId, showCreateUserModal, closeModalHndlr 
         showImgIcon={true}
         iconType="reject"
       />
+      {changeUsername.modals}
     </>
   );
 };

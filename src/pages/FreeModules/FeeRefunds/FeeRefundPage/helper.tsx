@@ -16,6 +16,10 @@ export const receiptForOptions = [
     name: "Amount Paid"
   },
   {
+    id: "FINE_PAID",
+    name: "Fine Paid"
+  },
+  {
     id: "ADMISSION_WITH_DRAWL",
     name: "Admission Withdrawal"
   }

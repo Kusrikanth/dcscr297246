@@ -234,3 +234,11 @@ export const classCompletionOptions = [
     name: "Not Completed"
   }
 ]  
+// TODO: remove once the "revert TC to previous academic year" API is available on the backend.
+// The attendance check before preparing a TC and the password authentication that follows are
+// UI only for now, so the password is validated against this sample value.
+export const USE_SAMPLE_TC_REVERT_AUTH = true;
+
+export const SAMPLE_TC_REVERT_PASSWORD = "Admin@123";
+
+export const SAMPLE_TC_REVERT_LEDGER_COUNT = 6;

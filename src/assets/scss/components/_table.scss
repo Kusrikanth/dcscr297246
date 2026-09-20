@@ -270,6 +270,29 @@
 }
 
 
+//Pins the column that sits next to an 80px wide sticky actions column.
+.table th.sticky-right-status {
+  position: sticky;
+  right: 80px;
+}
+
+.table td.sticky-right-status {
+  position: sticky;
+  right: 80px;
+  background-color: #ffffff;
+}
+
+.table th.sticky-right-second {
+  position: sticky;
+  right: 160px;
+}
+
+.table td.sticky-right-second {
+  position: sticky;
+  right: 160px;
+  background-color: #ffffff;
+}
+
 .table th.sticky-second-left {
   position: sticky;
   left: 100px;

@@ -79,6 +79,7 @@ export const getStudentLedgersForFeeAdjustExcessAmountAct = createAction<INewAct
 export const getCampusTransferStudentRefundAmountAct = createAction<INewActionType | undefined>(FeeCollectionsConstants.GET_CAMPUS_TRANSFER_STUDENT_REFUND_AMOUNT)
 export const saveProcessStudentRefundAmountAct = createAction<INewActionType | undefined>(FeeCollectionsConstants.SAVE_PROCESS_STUDENT_REFUND_AMOUNT)
 export const deleteLedgerDetailAct = createAction<INewActionType | undefined>(FeeCollectionsConstants.DELETE_LEDGER_DETAILS)
+export const updateLedgerDetailsAct = createAction<INewActionType | undefined>(FeeCollectionsConstants.UPDATE_LEDGER_DETAILS)
 
 export const feeLedgersConcessionAct = createAction<INewActionType | undefined>(FeeCollectionsConstants.GET_FEELEDGERS_CONCESSION_REQUEST)
 

@@ -9,7 +9,7 @@ import { tabsOptions } from "./helper";
 
 //Component
 import BranchInfo from "./BranchInfo";
-import BranchDetails from "./BankDetails";
+import EmailIntegration from "./EmailIntegration";
 
 
 function getActiveMenuComponent(tabId: string | null) {
@@ -18,8 +18,8 @@ function getActiveMenuComponent(tabId: string | null) {
             return BranchInfo;
         // case "contact-person":
         //     return ContactPerson;
-        case "bank-details":
-            return BranchDetails;
+        case "email-integration":
+            return EmailIntegration;
     }
 }
 

@@ -9,7 +9,7 @@ import AccordionCardBody from '../../../../Components/Common/AccordionCardBody';
 import TableContainer from '../../../../Components/Common/TableContainer';
 import { generateConcessionColumns, generateFeeDetailsColumns, generateLedgerColumns, generateReceiptColumns, generateRefundsColumns, generateScheduledColumns, USE_SAMPLE_STUDENT_FEE_LEDGER, sampleStudentFeeLedgerDetails, sampleFeeSummary, sampleFeeDetails, sampleFeeReceipts, sampleFeeConcessions, sampleFeeRefunds, sampleAcademicYears, sampleStudentSearchList } from './helper';
 import { shallowEqual } from 'react-redux';
-import { createJodoIdAct, deleteLedgerDetailAct, getFeeDetailsAct, getFeeReceiptsAct, getFeeSummaryDetailsAct, updateJodoDiscountAct, getLedgerDetailsAct, getScheduleDetailsAct, getStudentConcessionForFeeSummaryAct, resetJodoDiscountDetailsAct, updateErpToJodoReceiptAct, updateJodoPaymentToErpAct, printStudentLedgerDetailsAct, resetPrintStudentLedgerDetailsAct, getByIdFeeDueFollowUpRemarksAct } from '../../../../store/fee/feecollections/feecollectionactions';
+import { createJodoIdAct, deleteLedgerDetailAct, getFeeDetailsAct, getFeeReceiptsAct, getFeeSummaryDetailsAct, updateJodoDiscountAct, getLedgerDetailsAct, getScheduleDetailsAct, getStudentConcessionForFeeSummaryAct, resetJodoDiscountDetailsAct, updateErpToJodoReceiptAct, updateJodoPaymentToErpAct, printStudentLedgerDetailsAct, resetPrintStudentLedgerDetailsAct, getByIdFeeDueFollowUpRemarksAct, updateLedgerDetailsAct } from '../../../../store/fee/feecollections/feecollectionactions';
 import { generateActionPayload } from '../../../../utility/reduxutility';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../../hooks/storehook';
@@ -32,6 +32,7 @@ import { Delete02StrokeStandard, DownloadSquare02Icon, EyeIcon, MoneySendCircleI
 import Button from '../../../../Components/Common/Button';
 import PrintStudentFeeLedgerModal from './PrintStudentFeeLedgerModal';
 import FeeDueFollowUpRemarks from './FeeDueFollowUpRemarks';
+import EditLedgerDetailsModal from './EditLedgerDetailsModal';
 
 const FeeSummaryDetails = () => {
     const { modalState: previousLedgerModalState, closeModal: closePreviousLedgerModalHndlr,
@@ -44,6 +45,7 @@ const FeeSummaryDetails = () => {
     const { closeModal: closeUpdateJodoDiscountModal, modalState: updateJodoDiscountModalState, openModal: openUpdateJodoDiscountModal } = useModal()
     const { modalState: printStudentFeeLedgerModalState, closeModal: closePrintStudentFeeLedgerModalHndlr, openModal: openPrintStudentFeeLedgerModalHndlr } = useModal();
     const { openModal: feeDueFollowUpRemarksOpenModal, closeModal: feeDueFollowUpRemarksCloseModal, modalState: feeDueFollowUpRemarksModalState } = useModal()
+    const { openModal: openEditLedgerDetailsModal, closeModal: closeEditLedgerDetailsModal, modalState: editLedgerDetailsModalState } = useModal()
    
     const [viewReceiptModalState, setViewReceiptModalState] =
         useState({
@@ -55,6 +57,8 @@ const FeeSummaryDetails = () => {
         showModal: false,
         id: undefined
     })
+    // Keeps the edited ledger values visible on the ledger table until the ledger API is re-fetched.
+    const [ledgerEditOverrides, setLedgerEditOverrides] = useState<Record<string, { lastDate: string, jodoPaymentMethod: string }>>({});
     const location = useLocation<any>();
     const routeState =
         location.state ||
@@ -79,6 +83,7 @@ const FeeSummaryDetails = () => {
         getStudentConcessionForFee,
         studentsListResp,
         deleteLedgerDetailResp,
+        updateLedgerDetailsResp,
         feeCollectionErrorResp,
         updateErpToJodoReceiptResp,
         updateJodoToErpPaymentResp,
@@ -98,6 +103,7 @@ const FeeSummaryDetails = () => {
             updateJodoDiscountResp: feeCollections.updateJodoDiscountResp,
             createJodoIdResp: feeCollections.createJodoIdResp,
             deleteLedgerDetailResp: feeCollections.deleteLedgerDetailResp,
+            updateLedgerDetailsResp: feeCollections.updateLedgerDetailsResp,
             feeRefundsResp: feeCollections.feeRefundsResp,
             studentConcessionList: feeConcession.studentConcessionList,
             currentBranchIdResp: appData.currentBranchIdResp,
@@ -130,6 +136,7 @@ const FeeSummaryDetails = () => {
 
     const feeSummaryDetailsRespRef = useRef({
         prevDeleteLedgerDetailResp: deleteLedgerDetailResp,
+        prevUpdateLedgerDetailsResp: updateLedgerDetailsResp,
         prevUpdateErpToJodoReceiptResp: updateErpToJodoReceiptResp,
         prevUpdateJodoToErpPaymentResp: updateJodoToErpPaymentResp,
         prevUpdateJodoDiscountResp: updateJodoDiscountResp,
@@ -139,7 +146,7 @@ const FeeSummaryDetails = () => {
     });
 
     useEffect(() => {
-        const { prevDeleteLedgerDetailResp, prevUpdateErpToJodoReceiptResp,
+        const { prevDeleteLedgerDetailResp, prevUpdateLedgerDetailsResp, prevUpdateErpToJodoReceiptResp,
             prevUpdateJodoToErpPaymentResp, prevUpdateJodoDiscountResp, prevCreateJodoIdResp,
             prevSaveFeeDueFollowUpRemarksResp, prevFeeCollectionErrorResp } = feeSummaryDetailsRespRef.current;
 
@@ -148,6 +155,10 @@ const FeeSummaryDetails = () => {
             getLedgerDetails(searchStudentState?.studentId || routeState.studentId, selectedYear);
             getStudentConcessionDetails(searchStudentState?.studentId || routeState.studentId, selectedYear, searchStudentState?.classId || routeState.classId);
             toggleDeleteLedgerModal();
+        } else if (updateLedgerDetailsResp && updateLedgerDetailsResp !== prevUpdateLedgerDetailsResp) {
+            toast.success("Ledger details updated successfully.");
+            closeEditLedgerDetailsModal();
+            getLedgerDetails(searchStudentState?.studentId || routeState.studentId, selectedYear);
         } else if (updateErpToJodoReceiptResp && prevUpdateErpToJodoReceiptResp !== updateErpToJodoReceiptResp) {
             toast.success("Reciept updated successfully to JODO.");
             closeUpdateReceiptToJodoModal()
@@ -195,6 +206,7 @@ const FeeSummaryDetails = () => {
         }
 
         feeSummaryDetailsRespRef.current.prevDeleteLedgerDetailResp = deleteLedgerDetailResp;
+        feeSummaryDetailsRespRef.current.prevUpdateLedgerDetailsResp = updateLedgerDetailsResp;
         feeSummaryDetailsRespRef.current.prevUpdateErpToJodoReceiptResp = updateErpToJodoReceiptResp;
         feeSummaryDetailsRespRef.current.prevUpdateJodoToErpPaymentResp = updateJodoToErpPaymentResp;
         feeSummaryDetailsRespRef.current.prevUpdateJodoDiscountResp = updateJodoDiscountResp;
@@ -202,7 +214,7 @@ const FeeSummaryDetails = () => {
         feeSummaryDetailsRespRef.current.prevSaveFeeDueFollowUpRemarksResp = saveFeeDueFollowUpRemarksResp;
         feeSummaryDetailsRespRef.current.prevFeeCollectionErrorResp = feeCollectionErrorResp;
 
-    }, [searchStudentState, selectedYear, deleteLedgerDetailResp, updateErpToJodoReceiptResp,
+    }, [searchStudentState, selectedYear, deleteLedgerDetailResp, updateLedgerDetailsResp, updateErpToJodoReceiptResp,
         updateJodoToErpPaymentResp, updateJodoDiscountResp, createJodoIdResp, saveFeeDueFollowUpRemarksResp, feeCollectionErrorResp]);
 
     const handlePrintStudentLedger = () => {
@@ -479,6 +491,28 @@ const FeeSummaryDetails = () => {
         dispatch(deleteLedgerDetailAct(generateActionPayload("delete_ledger_details", { id: deleteLedgerState?.id })));
     }
 
+    function editLedgerDetailsHndlr(ledger: any) {
+        openEditLedgerDetailsModal(ledger);
+    }
+
+    const updateLedgerDetailsHndlr = (values: { lastDate: string, jodoPaymentMethod: string }) => {
+        const ledger = editLedgerDetailsModalState.modalData;
+        if (!ledger?.id) {
+            return;
+        }
+        setLedgerEditOverrides((prev) => ({ ...prev, [ledger.id]: values }));
+        // TODO: remove the sample-data branch once the ledger update API is available.
+        if (useSampleLedger) {
+            toast.success("Ledger details updated successfully.");
+            closeEditLedgerDetailsModal();
+            return;
+        }
+        dispatch(updateLedgerDetailsAct(generateActionPayload("update_ledger_details", { id: ledger.id }, {
+            lastDate: values.lastDate,
+            jodoPaymentMethod: values.jodoPaymentMethod || null,
+        })));
+    }
+
     function previousYearBalanceHndlr() {
         const { basicDetails } = ledgerDetails || {},
             { studentDetails, studentAcademicDetails } = basicDetails || {};
@@ -552,14 +586,25 @@ const FeeSummaryDetails = () => {
 
     const FeeDetailsColumns = useMemo(() => generateFeeDetailsColumns(), []);
     const SchedulesColumns = useMemo(() => generateScheduledColumns(), []);
-    const LedgerColumns = useMemo(() => generateLedgerColumns(ledgerMenuOptions), [ledgerDetails]);
+    const LedgerColumns = useMemo(() => generateLedgerColumns(ledgerMenuOptions, canCreateAndUpdate ? editLedgerDetailsHndlr : undefined), [ledgerDetails, canCreateAndUpdate]);
     const ReceiptColumns = useMemo(() => generateReceiptColumns(menuOptions), [feeReceiptsResp]);
     const ConcessionColumns = useMemo(() => generateConcessionColumns(concessionMenuOptions), [getStudentConcessionForFee]);
     const RefundColumns = useMemo(() => generateRefundsColumns(), []);
 
     const useSampleLedger = USE_SAMPLE_STUDENT_FEE_LEDGER && !ledgerDetails?.basicDetails?.studentDetails;
     const effectiveLedgerDetails = useSampleLedger ? sampleStudentFeeLedgerDetails : ledgerDetails;
-    const { ledgers: LedgerList, basicDetails: StudentDetails } = effectiveLedgerDetails || {};
+    const { ledgers: LedgerListResp, basicDetails: StudentDetails } = effectiveLedgerDetails || {};
+    const LedgerList = useMemo(() => {
+        if (!Array.isArray(LedgerListResp) || !Object.keys(ledgerEditOverrides).length) {
+            return LedgerListResp;
+        }
+        return LedgerListResp.map((ledger: any) => {
+            const editedLedger = ledgerEditOverrides[ledger?.id];
+            return editedLedger
+                ? { ...ledger, lastDate: editedLedger.lastDate, jodoPaymentMethod: editedLedger.jodoPaymentMethod || null }
+                : ledger;
+        });
+    }, [LedgerListResp, ledgerEditOverrides]);
     // TODO: remove once the ledger details API returns isEliteParent on parent records.
     const SHOW_ELITE_PARENT_SAMPLE = true;
     const isEliteParentKid = SHOW_ELITE_PARENT_SAMPLE || (Array.isArray(StudentDetails?.studentParentDetails)
@@ -1108,6 +1153,20 @@ const FeeSummaryDetails = () => {
                 showImgIcon={true}
                 iconType="reject"
             />
+            <ModalContainerUpdated
+                id="edit-ledger-details-modal"
+                isOpen={editLedgerDetailsModalState.showModal}
+                toggle={closeEditLedgerDetailsModal}
+                modalTitle="Edit Ledger Details"
+                modalSize="md"
+            >
+                <EditLedgerDetailsModal
+                    ledgerDetail={editLedgerDetailsModalState.modalData}
+                    isDisabled={showApiLoader}
+                    toggle={closeEditLedgerDetailsModal}
+                    submitHndlr={updateLedgerDetailsHndlr}
+                />
+            </ModalContainerUpdated>
             <ModalContainerUpdated
                 id="fee-summary-view-document-modal"
                 isOpen={viewDocumentModalState.showModal}

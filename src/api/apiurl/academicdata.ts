@@ -178,6 +178,7 @@ export const academicUrl = {
   export_fee_summary_list: `/fee/api/studentFeeLedgers/export`,
   download_due_amount_student_list: `/fee/api/fee-service/feeCash/due-amount-pdf`,
   delete_ledger_details: ({ id }: any) => `/fee/api/studentFeeLedgers/delete/${id}`,
+  update_ledger_details: ({ id }: any) => `/fee/api/studentFeeLedgers/update-ledger/${id}`,
   ledger_details: `/fee/api/studentFeeLedgers/studentFeeLedgers`,
   student_fee_details: ({ studentId }: any) => `/fee/api/studentFeeLedgers/${studentId}/studentFeeDetails`,
   student_schedule_details: ({ studentId }: any) => `/fee/api/studentFeeLedgers/${studentId}/schedules`,
@@ -266,4 +267,6 @@ export const academicUrl = {
   export_section_wise_language : `/academic/api/v1/branch-dashboard/language-analysis/export`,
   get_all_language_list : `/academic/api/academic-service/academicLanguages/languages-by-type`,
   get_class_wise_gender_analysis : `/academic/api/v1/branch-dashboard/class-gender-analysis`,
+  get_student_status_analysis: `/academic/api/v1/branch-dashboard/student-status-analysis`,
+  export_student_status_analysis: `/academic/api/v1/branch-dashboard/student-status-analysis/export`,
 };

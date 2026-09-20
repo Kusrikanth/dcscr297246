@@ -41,6 +41,8 @@ import {
     setGetWorkTypeByIdAct,
     setDeleteWorkTypeAct,
     setClassWiseGenderAnalysisAct,
+    setStudentStatusAnalysisAct,
+    setExportStudentStatusAnalysisAct,
     setAddChangeCampusDpsAct,
     setExportStudentBirthdayReportAct
 } from "./academicrequestslice";
@@ -543,6 +545,26 @@ function* getClassWiseGenderAnalysisGen(action: ICreatedActionType): any {
     }
 }
 
+function* getStudentStatusAnalysisGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(getData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setAcademicRequestErrorAct(response.error));
+    } else {
+        yield put(setStudentStatusAnalysisAct(response.data));
+    }
+}
+
+function* exportStudentStatusAnalysisGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(getData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setAcademicRequestErrorAct(response.error));
+    } else {
+        yield put(setExportStudentStatusAnalysisAct(response.data));
+    }
+}
+
 export default function* masterFeeSettingsSaga() {
     yield takeLatest(AcademicRequestConstants.CHANGE_CAMPUS_LIST_REQUEST, getChangeCampusListGen);
     yield takeLatest(AcademicRequestConstants.CHANGE_TRANSFER_REQUEST, getChangeTransferRequestGen);
@@ -604,4 +626,6 @@ export default function* masterFeeSettingsSaga() {
     yield takeLatest(AcademicRequestConstants.GET_THIRD_LANG, getThirdLangListGen);
     yield takeLatest(AcademicRequestConstants.EXPORT_CHANGE_CAMPUS, exportChangeCampusGen);
     yield takeLatest(AcademicRequestConstants.GET_CLASS_WISE_GENDER_ANALYSIS, getClassWiseGenderAnalysisGen);
+    yield takeLatest(AcademicRequestConstants.GET_STUDENT_STATUS_ANALYSIS, getStudentStatusAnalysisGen);
+    yield takeLatest(AcademicRequestConstants.EXPORT_STUDENT_STATUS_ANALYSIS, exportStudentStatusAnalysisGen);
 }

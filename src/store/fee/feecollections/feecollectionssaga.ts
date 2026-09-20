@@ -29,6 +29,7 @@ import {
     setLedgerForFeeAdjustAct, setPreviousYearBalanceLedgersAct,
     setExportFeeReversalAct,
     setDeleteLedgerDetailAct,
+    setUpdateLedgerDetailsAct,
     setFeeLedgersConcessionAct,
     setExportFeeRefundListAct,
     setPaymentActiveDetailsAct,
@@ -623,6 +624,16 @@ function* deleteLedgerDetailGen(action: ICreatedActionType): any {
     }
 }
 
+function* updateLedgerDetailsGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(putData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setMasterFeeSettingsErrorAct(response.error));
+    } else {
+        yield put(setUpdateLedgerDetailsAct({ statusCode: response.status }));
+    }
+}
+
 function* feeLedgersConcessionGen(action: ICreatedActionType): any {
     const { payload } = action;
     const response = yield call(postData, payload.endpoint, payload.payload, payload.optionalConfig);
@@ -843,6 +854,7 @@ export default function* feeCollectionsSaga() {
     yield takeLatest(FeeCollectionsConstants.GET_FEE_REVERSAL_REQUEST, getFeeReversalsGen);
     yield takeLatest(FeeCollectionsConstants.EXPORT_FEE_REVERSAL, exportFeeReversalGen);
     yield takeLatest(FeeCollectionsConstants.DELETE_LEDGER_DETAILS, deleteLedgerDetailGen);
+    yield takeLatest(FeeCollectionsConstants.UPDATE_LEDGER_DETAILS, updateLedgerDetailsGen);
     yield takeLatest(FeeCollectionsConstants.GET_FEELEDGERS_CONCESSION_REQUEST, feeLedgersConcessionGen);
     yield takeLatest(FeeCollectionsConstants.GET_PAYMENT_DETAILS, getPaymentActiveDetailsGen);
     yield takeLatest(FeeCollectionsConstants.GET_PAYMENT_ACTIVE_DETAILS_BY_ID, getPaymentActiveDetailsByIdGen);

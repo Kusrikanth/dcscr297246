@@ -1,7 +1,33 @@
+import { HugeiconsIcon } from "@hugeicons/react"
+import { PencilEdit02Icon } from "@hugeicons-pro/core-stroke-standard"
 import { StatusLabel, UserDetails } from "../../../../Components/Common"
 import { IOptionsHrtl, MenuOptionHrtl, MoreActions } from "../../../../Components/Common/MenuOptions"
 import { getAmountValueWithDecimal, getDisplayAmountValue } from "../../../../utility/commonutility"
 import {  convertUTCToISTTimeOnly, getDdMmYyyyWithMonthNameFormat, getFormattedDateddMMMYYYY } from "../../../../utility/dateutility"
+
+// Values stored against jodo_payment_method on the student fee ledger records.
+export const JODO_PAYMENT_METHODS: Record<string, { label: string, statusType: string }> = {
+    CRED_OPTED: { label: "CRED Opted", statusType: "cred" },
+    FLEX_OPTED: { label: "Flex Opted", statusType: "flex" },
+}
+
+export const JODO_PAYMENT_METHOD_OPTIONS = Object.entries(JODO_PAYMENT_METHODS)
+    .map(([value, { label }]) => ({ value, label }))
+
+export function getJodoPaymentMethodLabel(jodoPaymentMethod: any) {
+    if (!jodoPaymentMethod) {
+        return "";
+    }
+    return JODO_PAYMENT_METHODS[jodoPaymentMethod]?.label || String(jodoPaymentMethod).replace(/_/g, " ");
+}
+
+function EditLedgerIcon({ title, onClick }: { title: string, onClick: () => void }) {
+    return (
+        <span role="button" title={title} className="cursor-pointer text-muted" onClick={onClick}>
+            <HugeiconsIcon icon={PencilEdit02Icon} size={16} />
+        </span>
+    )
+}
 
 export function generateFeeDetailsColumns() {
     return ([
@@ -88,7 +114,7 @@ export function generateScheduledColumns() {
         },
     ])
 }
-export function generateLedgerColumns(actionsList: Array<IOptionsHrtl>) {
+export function generateLedgerColumns(actionsList: Array<IOptionsHrtl>, editLedgerHndlr?: (ledger: any) => void) {
     return ([
         {
             Header: "Fee Details",
@@ -100,8 +126,9 @@ export function generateLedgerColumns(actionsList: Array<IOptionsHrtl>) {
             Header: "Last Date",
             accessor: "lastDate",
             disableSortBy: true,
+            columnClassName: "tw-w-[150px] tw-min-w-[150px]",
             Cell: ({ row: { original } }: any) => {
-                return <span className="tw-tw-text-nowrap">{getDdMmYyyyWithMonthNameFormat(original.lastDate)}</span>
+                return <span className="tw-text-nowrap">{getDdMmYyyyWithMonthNameFormat(original.lastDate)}</span>
             },
         },
         {
@@ -193,8 +220,34 @@ export function generateLedgerColumns(actionsList: Array<IOptionsHrtl>) {
             Header: "Status",
             accessor: "paymentStatus",
             disableSortBy: true,
+            columnClassName: "sticky-right-second !tw-z-10 !tw-bg-white",
+            tdClass: "sticky-right-second !tw-z-10",
             Cell: ({ row: { original } }: any) => {
                 return <StatusLabel type={original.paymentStatus} labelName={original.paymentStatus} />
+            },
+        },
+        {
+            // Holds the jodo payment method along with the entry point to edit the ledger.
+            Header: "Actions",
+            accessor: "jodoPaymentMethod",
+            disableSortBy: true,
+            columnClassName: "sticky-right !tw-z-10 !tw-bg-white tw-w-[160px] tw-min-w-[160px] tw-max-w-[160px]",
+            tdClass: "sticky-right !tw-z-10",
+            Cell: ({ row: { original } }: any) => {
+                const jodoPaymentMethod = original?.jodoPaymentMethod;
+                return (
+                    <div className="d-flex align-items-center tw-gap-2">
+                        {jodoPaymentMethod
+                            ? <StatusLabel
+                                type={JODO_PAYMENT_METHODS[jodoPaymentMethod]?.statusType || jodoPaymentMethod}
+                                labelName={getJodoPaymentMethodLabel(jodoPaymentMethod)}
+                            />
+                            : <span>-</span>}
+                        {editLedgerHndlr && (
+                            <EditLedgerIcon title="Edit Ledger Details" onClick={() => editLedgerHndlr(original)} />
+                        )}
+                    </div>
+                )
             },
         },
         // {
@@ -583,9 +636,9 @@ export const sampleStudentFeeLedgerDetails = {
     jodoOptedStatus: "Opted",
     jodoStudentId: "JODO-10234",
     ledgers: [
-        { id: 1, feeDetails: "Tuition Fee - Term 1", lastDate: "2026-06-15", amountToPay: 25000, totalConcession: 2000, netAmount: 23000, actualAmountPaid: 23000, amountPaid: 23000, amountToBePaid: 0, excessAmount: 0, refundedAmount: 0, remarks: "", paymentStatus: "PAID" },
-        { id: 2, feeDetails: "Tuition Fee - Term 2", lastDate: "2026-09-15", amountToPay: 25000, totalConcession: 2000, netAmount: 23000, actualAmountPaid: 0, amountPaid: 0, amountToBePaid: 23000, excessAmount: 0, refundedAmount: 0, remarks: "", paymentStatus: "UNPAID" },
-        { id: 3, feeDetails: "Transport Fee - Term 1", lastDate: "2026-06-15", amountToPay: 8000, totalConcession: 0, netAmount: 8000, actualAmountPaid: 4000, amountPaid: 4000, amountToBePaid: 4000, excessAmount: 0, refundedAmount: 0, remarks: "Partial payment", paymentStatus: "PARTIALLY_PAID" },
+        { id: 1, feeDetails: "Tuition Fee - Term 1", lastDate: "2026-06-15", amountToPay: 25000, totalConcession: 2000, netAmount: 23000, actualAmountPaid: 23000, amountPaid: 23000, amountToBePaid: 0, excessAmount: 0, refundedAmount: 0, remarks: "", paymentStatus: "PAID", jodoPaymentMethod: "CRED_OPTED" },
+        { id: 2, feeDetails: "Tuition Fee - Term 2", lastDate: "2026-09-15", amountToPay: 25000, totalConcession: 2000, netAmount: 23000, actualAmountPaid: 0, amountPaid: 0, amountToBePaid: 23000, excessAmount: 0, refundedAmount: 0, remarks: "", paymentStatus: "UNPAID", jodoPaymentMethod: "FLEX_OPTED" },
+        { id: 3, feeDetails: "Transport Fee - Term 1", lastDate: "2026-06-15", amountToPay: 8000, totalConcession: 0, netAmount: 8000, actualAmountPaid: 4000, amountPaid: 4000, amountToBePaid: 4000, excessAmount: 0, refundedAmount: 0, remarks: "Partial payment", paymentStatus: "PARTIALLY_PAID", jodoPaymentMethod: null },
     ],
 };
 

@@ -1,8 +1,7 @@
-import axios, { Axios, AxiosError, AxiosResponse } from "axios"
+import axios from "axios"
 import { requestInterceptor, responseInterceptor, responseInterceptorSuccess } from "./interceptor";
 import store from "../store";
-import { IUserList } from "../store/login/logintypes";
-import { setAuthenticatedUserAct, setCurrentInstIdAct, cleanAppDataStateAct } from "../store/appdata/appdataslice";
+import { cleanAppDataStateAct } from "../store/appdata/appdataslice";
 import { accessTokenKey, instituteIdKey } from "../Components/constants/storageconstants";
 import { removeLocalStorage } from "../utility/storageUtility";
 
@@ -23,22 +22,35 @@ axios.interceptors.request.use(
 
 axios.interceptors.response.use(responseInterceptorSuccess, responseInterceptor);
 
-const checkErrorResponse = (error: any, optionalConfig: any) => {
+type ApiErrorPayload = {
+    message?: string;
+    details?: string;
+    [key: string]: unknown;
+};
+
+const checkErrorResponse = (error: unknown) => {
     const ignoreErrorCodes = [401], // these errors are not sent to requesting method
-        { errorHandler } = optionalConfig || {};
+        response = axios.isAxiosError<ApiErrorPayload>(error) ? error.response : undefined;
     // const ignoreErrorCodes = [500, 405, 404, 401], // these errors are not sent to requesting method
     //     { errorHandler } = optionalConfig || {};
-    if (ignoreErrorCodes.includes(error?.response?.status)) {
+    if (ignoreErrorCodes.includes(response?.status)) {
         removeLocalStorage(accessTokenKey);
         removeLocalStorage(instituteIdKey);
         store.dispatch(cleanAppDataStateAct(undefined));
-        return { error: error.response.data };
-    } else if (error?.response?.status === 500) {
-        return { error: { details: `Error with satus code:${error?.response?.status}` } };
-    } else if (error.response && error.response.data) {
-        return { error: error.response.data };
+        return { error: response.data };
+    } else if (response?.data) {
+        // Keep the API's error payload for every status, including 500. Replacing
+        // it with a generic status message hides the exception that callers need
+        // to diagnose and display.
+        return { error: response.data };
     } else {
-        return { error: { details: `Error with satus code:${error?.response?.status}` } };
+        return {
+            error: {
+                details: response?.status
+                    ? `Request failed with status code ${response.status}`
+                    : "Unable to connect to the server",
+            },
+        };
     }
 
     // }
@@ -49,7 +61,7 @@ export async function getData(apiUrl: string, params = {}, optionalConfig = {}, 
         return await axios.get(apiUrl, { data: payload, params, ...optionalConfig })
     }
     catch (error) {
-        return checkErrorResponse(error, optionalConfig);
+        return checkErrorResponse(error);
     }
 }
 
@@ -58,7 +70,7 @@ export async function postData(apiUrl: string, payload = {}, optionalConfig = {}
         return await axios.post(apiUrl, payload, optionalConfig);
     }
     catch (error) {
-        return checkErrorResponse(error, optionalConfig);
+        return checkErrorResponse(error);
     }
 }
 
@@ -67,15 +79,15 @@ export async function putData(apiUrl: string, payload = {}, optionalConfig = {})
         return await axios.put(apiUrl, payload, optionalConfig);
     }
     catch (error) {
-        return checkErrorResponse(error, optionalConfig);
+        return checkErrorResponse(error);
     }
 }
 
 export async function deleteData(apiUrl: string, payload = {}, optionalConfig = {}) {
     try {
-        return await axios.delete(apiUrl, { data: payload });
+        return await axios.delete(apiUrl, { data: payload, ...optionalConfig });
     }
     catch (error) {
-        return checkErrorResponse(error, optionalConfig);
+        return checkErrorResponse(error);
     }
 }

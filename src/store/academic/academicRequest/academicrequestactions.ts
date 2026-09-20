@@ -66,3 +66,5 @@ export const exportSectionWiseLanguageAct = createAction<INewActionType | undefi
 export const getSecondLangListAct = createAction<INewActionType | undefined>(AcademicRequestConstants.GET_SECOND_LANG);
 export const getThirdLangListAct = createAction<INewActionType | undefined>(AcademicRequestConstants.GET_THIRD_LANG);
 export const getClassWiseGenderAnalysisAct = createAction<INewActionType | undefined>(AcademicRequestConstants.GET_CLASS_WISE_GENDER_ANALYSIS);
+export const getStudentStatusAnalysisAct = createAction<INewActionType | undefined>(AcademicRequestConstants.GET_STUDENT_STATUS_ANALYSIS);
+export const exportStudentStatusAnalysisAct = createAction<INewActionType | undefined>(AcademicRequestConstants.EXPORT_STUDENT_STATUS_ANALYSIS);

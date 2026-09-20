@@ -62,6 +62,8 @@ export function generateColumns(actionsList: Array<IOptionsHrtl>) {
       Header: "Status",
       accessor: "enabled",
       disableSortBy: true,
+      columnClassName: "sticky-right-status !tw-z-10 !tw-bg-gray-100",
+      tdClass: "sticky-right-status !tw-z-10",
       Cell: ({ value }: any) => {
         const statusValue = value ? "Active" : "Inactive";
         return (
@@ -73,6 +75,8 @@ export function generateColumns(actionsList: Array<IOptionsHrtl>) {
       Header: "Actions",
       filterable: false,
       disableSortBy: true,
+      columnClassName: "sticky-right !tw-z-10 !tw-bg-gray-100 tw-w-[80px] tw-min-w-[80px] tw-max-w-[80px]",
+      tdClass: "sticky-right !tw-z-10 !tw-overflow-visible has-[.dropdown.show]:!tw-z-[9999]",
       Cell: ({ row: { original } }: any) => {
         const { enabled } = original, userActions = getUserActions(enabled, actionsList);
         return (

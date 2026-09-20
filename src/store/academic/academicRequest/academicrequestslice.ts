@@ -62,6 +62,8 @@ const initialState: IAcademicRequestReducerState = {
     getSecondLangListResp: undefined,
     getThirdLangListResp: undefined,
     getClassWiseGenderAnalysisResp: undefined,
+    getStudentStatusAnalysisResp: undefined,
+    exportStudentStatusAnalysisResp: undefined,
 };
 
 export const academicRequest = createSlice({
@@ -245,6 +247,12 @@ export const academicRequest = createSlice({
         setClassWiseGenderAnalysisAct: (state, action: PayloadAction<any>) => {
             state.getClassWiseGenderAnalysisResp = action.payload
         },
+        setStudentStatusAnalysisAct: (state, action: PayloadAction<any>) => {
+            state.getStudentStatusAnalysisResp = action.payload
+        },
+        setExportStudentStatusAnalysisAct: (state, action: PayloadAction<any>) => {
+            state.exportStudentStatusAnalysisResp = action.payload
+        },
     },
 });
 
@@ -298,6 +306,7 @@ export const {
     exportAttendanceTrackerReportAct,
     setSectionWiseLanguageAct,setSecondLangListAct,setThirdLangListAct,
     setExportSectionWiseLanguageAct, setExportChangeCampusAct, setClassWiseGenderAnalysisAct,
+    setStudentStatusAnalysisAct, setExportStudentStatusAnalysisAct,
 } = academicRequest.actions;
 
 export default academicRequest.reducer;

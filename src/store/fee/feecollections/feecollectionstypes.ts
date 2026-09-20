@@ -65,6 +65,7 @@ export interface IFeeCollectionsReducerState {
     getCampusTransferStudentRefundAmountResp: any;
     saveProcessStudentRefundAmountResp: any;
     deleteLedgerDetailResp: any;
+    updateLedgerDetailsResp: any;
     // verifyingFeePaymentResp: any;
 
 

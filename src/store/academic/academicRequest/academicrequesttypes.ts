@@ -56,4 +56,6 @@ export interface IAcademicRequestReducerState {
     getSecondLangListResp:any;
     getThirdLangListResp:any;
     getClassWiseGenderAnalysisResp:any;
+    getStudentStatusAnalysisResp:any;
+    exportStudentStatusAnalysisResp:any;
 }

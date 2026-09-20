@@ -10,7 +10,7 @@ export const tabsOptions: Array<ITabItem> = [
     //     tabName: "Contact Person"
     // },
     {
-        tabId: "bank-details",
-        tabName: "Bank Details"
+        tabId: "email-integration",
+        tabName: "Email Integration"
     }
 ]

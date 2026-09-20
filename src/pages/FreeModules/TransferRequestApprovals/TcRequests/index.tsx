@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ModalContainerUpdated } from "../../../../Components/Common";
 import TableContainer from "../../../../Components/Common/TableContainer";
 import {
@@ -24,6 +24,7 @@ import { UncontrolledTooltip } from "reactstrap";
 import ExportModal from "../../../Directory/StudentManagement/ExportModal";
 import Button from "../../../../Components/Common/Button";
 import { downloadExcelFile } from "../../../../utility/commonutility";
+import { useRevertedTcRecords } from "../../../../utility/tcrevertutility";
 
 const TcRequests = () => {
   const dispatch = useAppDispatch();
@@ -50,6 +51,8 @@ const TcRequests = () => {
   } = useModal();
 
   const filterRef = useRef(initialFilterValues);
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("");
+  const revertedTcRecords = useRevertedTcRecords();
   const { currentBranchIdResp: branchId, currentInstIdResp: instituteId,
     tcRequestList, exportTcRequestListResp, classroomManagmentErrorResp, showApiLoader } =
     useAppSelector(
@@ -190,6 +193,7 @@ const TcRequests = () => {
 
   function updateFilterHandler(appliedFilter: any) {
     filterRef.current = appliedFilter;
+    setSelectedAcademicYearId(appliedFilter?.academicYearId || "");
     getTcRequestListResponse();
   }
 
@@ -205,6 +209,33 @@ const TcRequests = () => {
   };
 
   const { content: TcRequestList = [], totalElements, totalPages, number: pageNumber } = tcRequestList || {};
+
+  // A TC request reverted from the Transfer Certificate screen comes back as a pending approval
+  // under the academic year it was reverted to.
+  const displayedTcRequestList = useMemo(() => {
+    const revertedRows = revertedTcRecords
+      .filter((record) => `${record.revertedAcademicYearId}` === `${selectedAcademicYearId}`)
+      .map((record) => ({
+        tcRequestId: record.tcId,
+        studentId: record.studentId,
+        studentCode: record.studentCode,
+        studentName: record.studentName,
+        curriculumName: record.curriculumName,
+        className: record.className,
+        sectionName: record.sectionName,
+        tcApplicationDate: record.tcApplicationDate,
+        lastAttendanceDate: record.lastAttendanceDate,
+        deptApprovedStatus: "PENDING",
+        tcRequestStatus: "Yet to prepare",
+        feePaidStatus: "PENDING",
+      }));
+    const revertedTcIds = revertedRows.map((row) => `${row.tcRequestId}`);
+    return [
+      ...revertedRows,
+      ...TcRequestList.filter((row: any) => !revertedTcIds.includes(`${row.tcRequestId}`)),
+    ];
+  }, [TcRequestList, revertedTcRecords, selectedAcademicYearId]);
+
   const roleColumns = useMemo(() => generateColumns(menuOptions || []), [tcRequestList]);
   return (
     <>
@@ -236,7 +267,7 @@ const TcRequests = () => {
         </div>
         <TableContainer
           columns={roleColumns || []}
-          data={TcRequestList || []}
+          data={displayedTcRequestList}
           divClass="table-responsive mb-3"
           theadClass="table-light text-muted align-middle"
           showPagination={true}
