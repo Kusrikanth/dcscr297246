@@ -8,7 +8,9 @@ import {
 import {
   advanceFilterKeys,
   generateColumns, statusTypes,
-  SAMPLE_TC_REVERT_LEDGER_COUNT
+  SAMPLE_TC_REVERT_LEDGER_COUNT,
+  matchesTcRetentionFilters,
+  tcRetentionFilterKeys
 } from "./helper";
 import TableContainer from "../../../Components/Common/TableContainer";
 import OfflineTransferCertificateModal from "./OfflineTransferCertificateModal";
@@ -34,7 +36,7 @@ import {
   HugeiconsIcon
 } from "@hugeicons/react";
 import {
-  CancelCircleIcon, Certificate01Icon, Mail01Icon, PencilEdit02Icon,
+  BubbleChatIcon, CancelCircleIcon, Certificate01Icon, Mail01Icon, PencilEdit02Icon,
   PrinterStrokeStandard, PropertyViewIcon, TaskEdit01StrokeStandard, Upload03Icon
 } from "@hugeicons-pro/core-stroke-standard";
 import { searchInputOptions } from "../../Directory/StudentManagement/helper";
@@ -43,11 +45,17 @@ import Button from "../../../Components/Common/Button";
 import ExportModal from "../../Directory/StudentManagement/ExportModal";
 import TcAttendanceCheckModal from "./TcAttendanceCheckModal";
 import TcRevertAuthModal from "./TcRevertAuthModal";
+import TcRetentionFollowUpModal from "./TcRetentionFollowUpModal";
 import {
   addRevertedTcRecord,
   getPreviousAcademicYear,
   useRevertedTcRecords,
 } from "../../../utility/tcrevertutility";
+import {
+  getTcRetentionMasterLists,
+  getTcRetentionSummary,
+  useTcRetentionFollowUps,
+} from "../../../utility/tcretentionutility";
 
 const initialValues: TransferCertificateFilterhProps = {
   search: "",
@@ -61,6 +69,9 @@ const initialValues: TransferCertificateFilterhProps = {
   tcApplicationEndDt: "",
   sectionId: "",
   date: "",
+  leavingReasons: [],
+  retentionStatuses: [],
+  retentionOfferTypes: [],
 };
 
 const filterSearchOptions = searchInputOptions.slice(0, 4);
@@ -90,6 +101,9 @@ const TransferCertificate = () => {
   } = useModal();
   const { modalState: tcRevertAuthState, closeModal: closeTcRevertAuthHndlr,
     openModal: openTcRevertAuthHndlr
+  } = useModal();
+  const { modalState: tcRetentionFollowUpState, closeModal: closeTcRetentionFollowUpHndlr,
+    openModal: openTcRetentionFollowUpHndlr
   } = useModal();
   const [
     offlineTransferCertificateModalState,
@@ -224,6 +238,21 @@ const TransferCertificate = () => {
     return [...revertedRowsForYear, ...rowsForYear];
   }, [tcRequestList, revertedTcRecords, transferCertificateFilterState.academicYearId]);
 
+  const retentionFollowUps = useTcRetentionFollowUps();
+  // TODO: fetch from the TC retention master APIs once they are available.
+  const [retentionMasters] = useState(getTcRetentionMasterLists);
+
+  // Adds each request's latest retention values for the list columns and applies the retention filters.
+  const tcTableRows = useMemo(() => {
+    const followUpsByTcId = new Map(retentionFollowUps.map((followUp) => [`${followUp.tcId}`, followUp]));
+    return displayedTcRequestList
+      .filter((row: any) => matchesTcRetentionFilters(followUpsByTcId.get(`${row.tcId}`), transferCertificateFilterState))
+      .map((row: any) => {
+        const followUp = followUpsByTcId.get(`${row.tcId}`);
+        return followUp ? { ...row, retentionSummary: getTcRetentionSummary(followUp, retentionMasters) } : row;
+      });
+  }, [displayedTcRequestList, retentionFollowUps, retentionMasters, transferCertificateFilterState]);
+
   const getTcRequestListResponse = (otherProps?: any) => {
     const payload = {
       ...transferCertificateFilterState,
@@ -258,8 +287,10 @@ const TransferCertificate = () => {
   }
 
   const exportExcelHndler = () => {
-
-    dispatch(exportTcListAct(generateActionPayload("export_tc_certificate_list", undefined, { ...transferCertificateFilterState, branchId, instituteId }, {
+    // The retention filters are client-side only, so they are kept out of the export query params.
+    const exportFilters: Partial<TransferCertificateFilterhProps> = { ...transferCertificateFilterState };
+    tcRetentionFilterKeys.forEach((key) => delete exportFilters[key]);
+    dispatch(exportTcListAct(generateActionPayload("export_tc_certificate_list", undefined, { ...exportFilters, branchId, instituteId }, {
       responseType: 'blob'
     })));
   }
@@ -518,6 +549,16 @@ const TransferCertificate = () => {
           const id = event.currentTarget.getAttribute('data-id');
           openTcDepartmentApprovalHndlr(id);
         }
+      },
+      {
+        id: "tcRetention",
+        actionIcon: <HugeiconsIcon icon={BubbleChatIcon} className="me-2 text-muted" size={18} />,
+        actionName: "TC Retention Follow-Up",
+        onClickHndlr: (event: any) => {
+          const id = event.currentTarget.getAttribute('data-id');
+          const tcRecord = displayedTcRequestList.find((item: any) => `${item.tcId}` === `${id}`);
+          openTcRetentionFollowUpHndlr({ tcRecord });
+        }
       }
     ],
     [tcRequestList, displayedTcRequestList]
@@ -750,7 +791,7 @@ const TransferCertificate = () => {
       const filterKey = key as keyof TransferCertificateFilterhProps;
       const filterValue = state[filterKey];
 
-      if (filterValue) { // Check if the filter has any value
+      if (Array.isArray(filterValue) ? filterValue.length > 0 : filterValue) { // Check if the filter has any value
         // Condition for showing "Clear Filter" button
         if (filterKey !== 'academicYearId' && !(filterKey === 'nameFilterType' && filterValue === 'global')) {
           tempFilterApplied = true;
@@ -953,13 +994,14 @@ const TransferCertificate = () => {
                     applyFilterCallback={advanceFilterCallbckHndlr}
                     toggleAdvanceFilter={toggleAdvanceFilter}
                     isOpen={open}
+                    retentionMasters={retentionMasters}
                   />
                 </OffCanvasContainer>
               </div>
 
               <TableContainer
                 columns={roleColumns}
-                data={displayedTcRequestList}
+                data={tcTableRows}
                 divClass="tw-overflow-x-auto tw-mb-3"
                 theadClass="tw-bg-gray-100 tw-text-gray-600 tw-align-middle"
                 showPagination={true}
@@ -1226,6 +1268,18 @@ const TransferCertificate = () => {
           isDisabled={showApiLoader}
           submitHndlr={revertTcRequestHndlr}
           closeHndlr={closeTcRevertAuthHndlr}
+        />
+      </ModalContainerUpdated>
+      <ModalContainerUpdated
+        id="tc-retention-follow-up-modal"
+        isOpen={tcRetentionFollowUpState.showModal}
+        toggle={closeTcRetentionFollowUpHndlr}
+        modalSize="xl"
+        modalTitle="TC Retention Follow-Up Remarks"
+      >
+        <TcRetentionFollowUpModal
+          tcRecord={tcRetentionFollowUpState?.modalData?.tcRecord}
+          toggle={closeTcRetentionFollowUpHndlr}
         />
       </ModalContainerUpdated>
       <ModalContainerUpdated

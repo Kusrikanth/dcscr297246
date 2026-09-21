@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { DateInput, SelectInput } from '../../../Components/Common'
+import { DateInput, MultiSelectCheckbox, SelectInput } from '../../../Components/Common'
+import { ITcRetentionMaster, ITcRetentionMasterLists } from '../../../utility/tcretentionutility';
 import { TransferCertificateFilterhProps } from './transferCertificateTypes';
 import { useAppSelector } from '../../../hooks/storehook';
 import { shallowEqual, useDispatch } from 'react-redux';
@@ -22,7 +23,18 @@ const initialValues: TransferCertificateFilterhProps = {
     tcApplicationEndDt: "",
     date: "",
     sectionId: "",
+    leavingReasons: [],
+    retentionStatuses: [],
+    retentionOfferTypes: [],
 };
+
+function renderRetentionMasters(selectedItems: Array<ITcRetentionMaster>) {
+    return <div className="tw-truncate">{selectedItems.map((item) => item.name).join(", ")}</div>;
+}
+
+function renderRetentionMasterOption(item: ITcRetentionMaster) {
+    return item.name;
+}
 
 const AdvanceFilterModal = (props: any) => {
 
@@ -62,10 +74,15 @@ const AdvanceFilterModal = (props: any) => {
             }
         }
     }
+    const retentionFilterHndlr = (selectedItems: Array<ITcRetentionMaster>, config: any) => {
+        const { name } = config || {};
+        setTransferCertificateFilterState(prev => ({ ...prev, [name]: Array.isArray(selectedItems) ? selectedItems : [] }));
+    }
     const resetHandler = () => {
-        setTransferCertificateFilterState((prev: any) => ({ ...prev, tcApplicationStartDt: "", tcRequestStatus: "", requestType: "", classId: "", tcApplicationEndDt: "", date: "" }));
+        const resetFilters = { tcApplicationStartDt: "", tcRequestStatus: "", requestType: "", classId: "", tcApplicationEndDt: "", date: "", leavingReasons: [], retentionStatuses: [], retentionOfferTypes: [] };
+        setTransferCertificateFilterState((prev: any) => ({ ...prev, ...resetFilters }));
         props.toggleAdvanceFilter();
-        props.applyFilterCallback({ ...transferCertificateFilterState, tcApplicationStartDt: "", tcRequestStatus: "", requestType: "", classId: "", tcApplicationEndDt: "", date: "" });
+        props.applyFilterCallback({ ...transferCertificateFilterState, ...resetFilters });
     }
     function applyFilterHndlr() {
         props.applyFilterCallback(transferCertificateFilterState);
@@ -101,6 +118,7 @@ const AdvanceFilterModal = (props: any) => {
     const { data: curriculumTypes } = brchCurriculumResp || {};
     const { content: classTypes } = classListForAdvanceFilter || {};
     const { data: sectionTypes } = sectionListResp || [];
+    const retentionMasters: ITcRetentionMasterLists | undefined = props.retentionMasters;
     return (
         <>
             <div className="offcanvas-body">
@@ -144,6 +162,25 @@ const AdvanceFilterModal = (props: any) => {
                         portalId={"transfer-certificate-advance-filter"}
                     />
                 </div>
+                {[
+                    { name: "leavingReasons", labelText: "Reason for Leaving", options: retentionMasters?.leavingReasons },
+                    { name: "retentionStatuses", labelText: "Retention Status", options: retentionMasters?.retentionStatuses },
+                    { name: "retentionOfferTypes", labelText: "Retention Offer Type", options: retentionMasters?.retentionOfferTypes },
+                ].map(({ name, labelText, options }) => (
+                    <div className='tw-mb-3' key={name}>
+                        <MultiSelectCheckbox
+                            name={name}
+                            idKey="id"
+                            labelText={labelText}
+                            value={transferCertificateFilterState[name as keyof ITcRetentionMasterLists] || []}
+                            renderValue={renderRetentionMasters}
+                            renderOptions={renderRetentionMasterOption}
+                            onChange={retentionFilterHndlr}
+                            searchKey="name"
+                            options={options || []}
+                        />
+                    </div>
+                ))}
             </div>
 
             <div className="tw-border-t tw-p-2 tw-text-center">

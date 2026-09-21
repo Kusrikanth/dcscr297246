@@ -1359,7 +1359,8 @@ export function generateMenuOptions(instituteCode) {
         "/admission-settings", "/admission-reports", "/student-details", "/parent-details",
         "/transfer-certificate", "/bonafide-certificate",
         "/change-stream", "/change-curriculum", "/change-campus", "/campus-transfer-requests",
-        "/class-wise-documents", "/master-documents", "/exam-subjects", "/unpaid-report", "/admission-availability", "/panel-member", "/evaluation-process", "/consolidated-viewold", "/consolidated-viewnew", "/admission-tracker-report", "/cbse-verification-report", "/enquiry", "/optional-subjects", "/configuration-settings", "/signature-configuration", "/branch-class-language"
+        "/class-wise-documents", "/master-documents", "/exam-subjects", "/unpaid-report", "/admission-availability", "/panel-member", "/evaluation-process", "/consolidated-viewold", "/consolidated-viewnew", "/admission-tracker-report", "/cbse-verification-report", "/enquiry", "/optional-subjects", "/configuration-settings", "/signature-configuration", "/branch-class-language",
+        "/tc-retention-settings"
       ],
       childMenu: [
         {
@@ -1449,7 +1450,8 @@ export function generateMenuOptions(instituteCode) {
           link: "/admission-settings",
           parentId: "transportation",
           permissions: [""],
-          childRoutes: ["/admission-availability", "/class-wise-documents", "/master-documents", "/exam-subjects", "/panel-member", "/evaluation-process", "/optional-subjects", "/configuration-settings", "/signature-configuration", "/branch-class-language"],
+          childRoutes: ["/admission-availability", "/class-wise-documents", "/master-documents", "/exam-subjects", "/panel-member", "/evaluation-process", "/optional-subjects", "/configuration-settings", "/signature-configuration", "/branch-class-language",
+            "/tc-retention-settings"],
           hasChildMenu: true,
           childMenu: [
             {
@@ -1540,6 +1542,13 @@ export function generateMenuOptions(instituteCode) {
               id: "signature-configuration",
               menuName: "Signature Configuration",
               link: "/signature-configuration",
+              parentId: "front-desk",
+              permissions: [""],
+            },
+            {
+              id: "tc-retention-settings",
+              menuName: "TC Retention Settings",
+              link: "/tc-retention-settings",
               parentId: "front-desk",
               permissions: [""],
             },

@@ -289,6 +289,7 @@ const AdmissionFacility = React.lazy(() => import('../pages/FrontDesk/Settings/A
 const OptionalSubjects = React.lazy(() => import("../pages/FrontDesk/Settings/OptionalSubjects"))
 const AdmissionConfigurationSettings = React.lazy(() => import('../pages/FrontDesk/Settings/AdmissionConfigurationSettings'));
 const SignatureConfiguration = React.lazy(() => import('../pages/FrontDesk/Settings/SignatureConfiguration'));
+const TcRetentionSettings = React.lazy(() => import('../pages/FrontDesk/Settings/TcRetentionSettings'));
 const Enquiry = React.lazy(() => import('../pages/FrontDesk/Enquiry'));
 const ExaminationMarksModal = React.lazy(() => import('../pages/FrontDesk/AdmissionManagment/ExaminationMarks/ExaminationMarksModal'));
 const EditorTest = React.lazy(() => import('../Components/Common/EditorTest'));
@@ -1823,6 +1824,11 @@ const authProtectedRoutes: any = [
   {
     path: "/signature-configuration",
     component: SignatureConfiguration,
+    allowedRoles: ["ACCOUNT_HEAD", "ADM_CONS", "ADM_HEAD", "BRANCH_ADMIN"],
+  },
+  {
+    path: "/tc-retention-settings",
+    component: TcRetentionSettings,
     allowedRoles: ["ACCOUNT_HEAD", "ADM_CONS", "ADM_HEAD", "BRANCH_ADMIN"],
   },
   {

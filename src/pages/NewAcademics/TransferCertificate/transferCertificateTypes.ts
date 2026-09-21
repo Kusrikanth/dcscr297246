@@ -1,3 +1,5 @@
+import { ITcRetentionMaster } from "../../../utility/tcretentionutility";
+
 // transfer certificate table filter
 export interface TransferCertificateFilterhProps {
   branchId?: string,
@@ -12,6 +14,10 @@ export interface TransferCertificateFilterhProps {
   date: string;
   sectionId: string;
   nameFilterType: string;
+  // TC retention filters, applied on the client until the TC list API supports them.
+  leavingReasons: Array<ITcRetentionMaster>;
+  retentionStatuses: Array<ITcRetentionMaster>;
+  retentionOfferTypes: Array<ITcRetentionMaster>;
 }
 
 
