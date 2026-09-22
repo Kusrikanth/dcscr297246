@@ -4,10 +4,12 @@ import { toast } from "react-toastify";
 import { ConfirmationModal, ModalContainerUpdated, SelectInput, TextInput } from "../../../Components/Common";
 import BreadCrumb from "../../../Components/Common/BreadCrumb";
 import TableContainer from "../../../Components/Common/TableContainer";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import {
   generateColumns,
   hasStateChanged,
+  USE_SAMPLE_FEE_REFUNDS_LIST,
+  sampleFeeRefundsList,
 } from "./helper";
 //Custom Hooks
 import { useAppDispatch, useAppSelector } from "../../../hooks/storehook";
@@ -43,6 +45,9 @@ const initialFilterState = {
 };
 const FeeRefunds = () => {
   const history = useHistory();
+  // Set by Create Refund in sample-submit mode (USE_SAMPLE_REFUND_SUBMIT), where the refund isn't saved.
+  const { state: locationState } = useLocation<any>();
+  const sampleCreatedRefund = locationState?.sampleCreatedRefund;
   const [filterState, setFilterState] = useState<any>(initialFilterState);
   const [branchState, setBranchState] = useState<Array<IBranchInfo>>([]);
   const [showClearFilterState, setShowClearFilterState] = useState(false);
@@ -285,7 +290,20 @@ const FeeRefunds = () => {
       return true
     })
   }, [showInstituteAdminUI]),
-    { data: refundsList, pageNumber, totalPages, totalElements } = feeRefundsResp || {};
+    feeRefundsData = useMemo(() => {
+      const hasLiveRows = Array.isArray(feeRefundsResp?.data) && feeRefundsResp.data.length > 0;
+      const listData = USE_SAMPLE_FEE_REFUNDS_LIST && !hasLiveRows ? sampleFeeRefundsList : feeRefundsResp;
+      if (!sampleCreatedRefund) {
+        return listData;
+      }
+      // The refund just created in sample mode isn't on the server, so show it at the top.
+      return {
+        ...listData,
+        data: [sampleCreatedRefund, ...(Array.isArray(listData?.data) ? listData.data : [])],
+        totalElements: (listData?.totalElements || 0) + 1,
+      };
+    }, [feeRefundsResp, sampleCreatedRefund]),
+    { data: refundsList, pageNumber, totalPages, totalElements } = feeRefundsData || {};
   return (
     <>
       <div className="page-content">

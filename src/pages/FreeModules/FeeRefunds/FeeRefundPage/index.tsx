@@ -27,6 +27,7 @@ import {
   finePaidAdjustLedgerColumns,
   getRefundableFineAmount,
   USE_SAMPLE_FINE_PAID_REFUND,
+  USE_SAMPLE_REFUND_SUBMIT,
   sampleFinePaidReceipts,
   samplePendingLedgersForFineAdjust
 } from "./helper";
@@ -142,10 +143,7 @@ const validationSchema = Yup.object().shape({
       // ...etc
     })
   }),
-  attachments: Yup.array().when('refundFor', {
-    is: "FINE_PAID",
-    then: Yup.array().min(1, "Attach a PDF or image file.")
-  }),
+  attachments: Yup.array().min(1, "Attach a PDF or image file."),
   adjustedStudentDetailsId: Yup.string().when('paymentMode', {
     is: (item: any) => (item === "ADJUSTMENT"),
     then: Yup.string().required("Search student after selecting academic year, curriculum.")
@@ -191,8 +189,8 @@ const initialValueRefundForm = {
   attachments: [] as Array<File>,
 }
 
-// Supporting document for a Fine Paid refund.
-const FINE_REFUND_ATTACHMENT_TYPES = ["application/pdf", "image/png", "image/jpeg"];
+// Supporting document required for every refund.
+const REFUND_ATTACHMENT_TYPES = ["application/pdf", "image/png", "image/jpeg"];
 
 // Shapes a student's pending ledgers into rows for the "Adjust To Fees" table.
 const toAdjustingLedgerRows = (ledgers: Array<any>) => ledgers.map((ledger: any) => ({
@@ -435,19 +433,68 @@ const FeeRefundPage = () => {
           return item;
         }
       }).filter(f => f)
-      if (values.refundFor === "FINE_PAID") {
-        // Fine Paid refunds also carry the receipt the fine was collected on, plus the
-        // mandatory supporting document, so they go as multipart like concession documents.
-        const formData = new FormData();
-        values.attachments.forEach((file: File) => formData.append("file", file));
-        formData.append("request", JSON.stringify({ ...payload, receiptId: selectedFineReceiptState?.id }));
-        dispatch(addFeeRefundAct(generateActionPayload("add_fee_refund", undefined, formData)));
+      // Fine Paid refunds also carry the receipt the fine was collected on.
+      const requestPayload = values.refundFor === "FINE_PAID"
+        ? { ...payload, receiptId: selectedFineReceiptState?.id }
+        : payload;
+      if (USE_SAMPLE_REFUND_SUBMIT) {
+        // Not sent to the server; the refund is shown on the Fee Refunds list instead.
+        console.info("Sample refund submit (not sent):", requestPayload, values.attachments);
+        toast.success("Refund added (sample mode, not saved to the server).");
+        if (location.state) {
+          history.push(`/student-fee-ledger/fee-details`, { ...location.state });
+        } else {
+          history.push("/fee-refunds", { sampleCreatedRefund: toSampleRefundListRow(values) });
+        }
         return;
       }
+      // Every refund carries a mandatory supporting document, so it goes as multipart like concession documents.
+      const formData = new FormData();
+      values.attachments.forEach((file: File) => formData.append("file", file));
+      formData.append("request", JSON.stringify(requestPayload));
 
-      dispatch(addFeeRefundAct(generateActionPayload("add_fee_refund", undefined, payload)));
+      dispatch(addFeeRefundAct(generateActionPayload("add_fee_refund", undefined, formData)));
     },
   });
+
+  // Shapes a sample-mode refund like a Fee Refunds list row; its attachments open from this browser session.
+  function toSampleRefundListRow(values: any) {
+    const now = new Date();
+    const { paymentMode, refundFor } = values;
+    const refundAmount = +values.finalRefundableAmount || 0;
+    const isAdjustment = ["ADJUSTMENT", "CT_ADJUSTMENT"].includes(paymentMode);
+    // A Fine Paid refund is adjusted into the same student's ledgers.
+    const adjustedStudent = refundFor === "FINE_PAID"
+      ? selectedStudentState
+      : paymentMode === "ADJUSTMENT" ? selectedAdjustableStudentState : null;
+    return {
+      id: `sample-${now.getTime()}`,
+      refundDate: now.toISOString(),
+      studentName: selectedStudentState?.studentName,
+      studentCode: selectedStudentState?.studentCode,
+      branchName: "",
+      curriculumName: brchCurriculumResp?.data?.find((item: any) => String(item.branchCurriculumId) === String(values.branchCurriculumId))?.curriculumName,
+      classShortName: branchClassResp?.content?.find((item: any) => String(item.id) === String(values.branchClassId))?.shortName,
+      refundAmount,
+      paymentMode,
+      transactionId: values.onlineDetailDTO?.transactionId,
+      transactionDate: paymentMode === "ONLINE" ? values.onlineDetailDTO?.transactionDate
+        : paymentMode === "CHEQUE" ? values.feeRefundChequeDTO?.chequeDate : "",
+      adjustAmount: refundFor === "FINE_PAID" ? refundAmount : isAdjustment ? +values.totalAdjustAmount || 0 : 0,
+      adjustedStudentName: adjustedStudent?.studentName,
+      adjustedStudentCode: adjustedStudent?.studentCode,
+      cashAmount: paymentMode === "CASH" ? refundAmount : 0,
+      chequeAmount: paymentMode === "CHEQUE" ? refundAmount : 0,
+      chequeNumber: values.feeRefundChequeDTO?.chequeNumber,
+      accountPayeeName: values.feeRefundChequeDTO?.accountPayeeName,
+      createdAt: now.toISOString().slice(0, 19),
+      fileInfo: values.attachments.map((file: File, index: number) => ({
+        id: `${now.getTime()}-${index}`,
+        originalFileName: file.name,
+        s3URL: URL.createObjectURL(file),
+      })),
+    };
+  }
 
   useEffect(() => {
     if (branchId) {
@@ -584,17 +631,17 @@ const FeeRefundPage = () => {
     if (studentId) {
       // const params = { studentDetailId: 1, academicYearId: 2, refundFor };
       getClassApiCall(curriculumId);
+      // One setValues only: Formik resolves `prev` from the last render, so a second call here
+      // would overwrite the curriculum/class set by the first.
       addFeeRefundForm.setValues((prev: any) => ({
         ...prev,
         branchCurriculumId: curriculumId,
         branchClassId: classId,
+        // Documents attached for the previous student don't apply to this one.
+        attachments: [],
+        // Drop the amount picked from the previous student's fine receipt.
+        ...(refundFor === "FINE_PAID" ? { finalRefundableAmount: "0.00", paymentAmount: "0.00" } : {}),
       }))
-      if (refundFor === "FINE_PAID") {
-        // Drop the amount and documents picked for the previous student.
-        addFeeRefundForm.setValues((prev: any) => ({
-          ...prev, finalRefundableAmount: "0.00", paymentAmount: "0.00", attachments: []
-        }))
-      }
       loadRefundRows(studentId, academicYearId, refundFor);
     } else {
       const { refundFor, branchCurriculumId, branchClassId, academicYearId } = addFeeRefundForm.values;
@@ -1930,28 +1977,27 @@ useEffect(() => {
                         </div>
                       </div>
 
-                      {isFinePaid && (
-                        <div className="tw-flex tw-mt-3">
-                          <div className="tw-flex-1 tw-p-0">
-                            <h6 className="tw-m-0">Attachment <span className="tw-text-red-500">*</span></h6>
-                          </div>
-                          <div className="tw-flex-1">
-                            <MultipleFileUpload
-                              key={`fine-attachments-${addFeeRefundForm.values.studentDetailId}`}
-                              name="attachments"
-                              prevFiles={addFeeRefundForm.values.attachments}
-                              onChange={(files: Array<File>) => addFeeRefundForm.setFieldValue("attachments", files)}
-                              accept={FINE_REFUND_ATTACHMENT_TYPES}
-                              acceptErrorText="Only PDF or image (JPG, PNG) files are allowed."
-                              maxSizeInMb={2}
-                              helperText="PDF or image (JPG, PNG). Max file size is 2MB."
-                              error={(addFeeRefundForm.touched.attachments && addFeeRefundForm.errors.attachments)
-                                ? addFeeRefundForm.errors.attachments.toString()
-                                : ""}
-                            />
-                          </div>
+                      <div className="tw-flex tw-mt-3">
+                        <div className="tw-flex-1 tw-p-0">
+                          <h6 className="tw-m-0">Attachment <span className="tw-text-red-500">*</span></h6>
                         </div>
-                      )}
+                        <div className="tw-flex-1">
+                          <MultipleFileUpload
+                            // Remount on the changes that reset the form, so the uploader's own file list clears too.
+                            key={`refund-attachments-${addFeeRefundForm.values.academicYearId}-${addFeeRefundForm.values.studentDetailId}-${addFeeRefundForm.values.refundFor}`}
+                            name="attachments"
+                            prevFiles={addFeeRefundForm.values.attachments}
+                            onChange={(files: Array<File>) => addFeeRefundForm.setFieldValue("attachments", files)}
+                            accept={REFUND_ATTACHMENT_TYPES}
+                            acceptErrorText="Only PDF or image (JPG, PNG) files are allowed."
+                            maxSizeInMb={2}
+                            helperText="PDF or image (JPG, PNG). Max file size is 2MB."
+                            error={(addFeeRefundForm.touched.attachments && addFeeRefundForm.errors.attachments)
+                              ? addFeeRefundForm.errors.attachments.toString()
+                              : ""}
+                          />
+                        </div>
+                      </div>
 
                     </div>
                   </div>

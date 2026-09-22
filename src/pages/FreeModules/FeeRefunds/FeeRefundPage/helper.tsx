@@ -463,6 +463,11 @@ export function finePaidAdjustLedgerColumns(isAllSelected: any, studentCheckHndl
   ];
 }
 
+// TODO: remove once /fee/api/fee/refund accepts the multipart request (file + request) for every refund type.
+// Lets Create Refund be tested end to end: the refund is not sent to the server; it is shown at the
+// top of the Fee Refunds list instead (with its attachment), until the page is reloaded.
+export const USE_SAMPLE_REFUND_SUBMIT = true;
+
 // TODO: remove once the fine-paid receipts API for refunds is available. The existing
 // /studentFeeLedgers/for/refund endpoint returns ledgers and fails for refundFor=FINE_PAID.
 export const USE_SAMPLE_FINE_PAID_REFUND = true;
