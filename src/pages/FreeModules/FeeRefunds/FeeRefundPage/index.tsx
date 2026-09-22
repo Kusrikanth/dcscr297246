@@ -12,7 +12,8 @@ import {
   TextInput,
   TextInputGroup,
   AutoSearchInputUpdated,
-  ModalContainerUpdated
+  ModalContainerUpdated,
+  MultipleFileUpload
 } from "../../../../Components/Common";
 import BackButtonText from "../../../../Components/Common/BackButtonText";
 import BreadCrumb from "../../../../Components/Common/BreadCrumb";
@@ -21,7 +22,13 @@ import {
   feeAdjustmentColumns,
   paymentOptions,
   createRefundPayload,
-  feeRefundColumns
+  feeRefundColumns,
+  finePaidReceiptSelectColumns,
+  finePaidAdjustLedgerColumns,
+  getRefundableFineAmount,
+  USE_SAMPLE_FINE_PAID_REFUND,
+  sampleFinePaidReceipts,
+  samplePendingLedgersForFineAdjust
 } from "./helper";
 import { default as RupeeSvg } from "../../../../assets/imagesdps/feeDashboard/RupeeSvg.svg?react";
 import TableContainer from "../../../../Components/Common/TableContainer";
@@ -83,7 +90,11 @@ const validationSchema = Yup.object().shape({
   branchCurriculumId: Yup.string().required("Select branch curriculum."),
   academicYearId: Yup.string().required("Select academic year."),
   studentDetailId: Yup.string().required("Student is required."),
-  paymentMode: Yup.string().required("Select payment mode."),
+  // A Fine Paid refund is settled by adjusting it into the student's ledgers, so it has no payment details.
+  paymentMode: Yup.string().when('refundFor', {
+    is: (item: any) => item !== "FINE_PAID",
+    then: Yup.string().required("Select payment mode.")
+  }),
   totalRefundAmount: Yup.string(),
   // studentRefundLedgerIds: Yup.array().min(1, "No fee refund ledger is there to fill."),
   // refundableAmount: Yup.string().test("totalRefundAmount", "Refundable amount should be Less than or equal to total refund amount.",
@@ -131,6 +142,10 @@ const validationSchema = Yup.object().shape({
       // ...etc
     })
   }),
+  attachments: Yup.array().when('refundFor', {
+    is: "FINE_PAID",
+    then: Yup.array().min(1, "Attach a PDF or image file.")
+  }),
   adjustedStudentDetailsId: Yup.string().when('paymentMode', {
     is: (item: any) => (item === "ADJUSTMENT"),
     then: Yup.string().required("Search student after selecting academic year, curriculum.")
@@ -173,7 +188,37 @@ const initialValueRefundForm = {
   adjustedStudentDetailsId: "",
   newStudentId: "",
   studentName: "",
+  attachments: [] as Array<File>,
 }
+
+// Supporting document for a Fine Paid refund.
+const FINE_REFUND_ATTACHMENT_TYPES = ["application/pdf", "image/png", "image/jpeg"];
+
+// Shapes a student's pending ledgers into rows for the "Adjust To Fees" table.
+const toAdjustingLedgerRows = (ledgers: Array<any>) => ledgers.map((ledger: any) => ({
+  studentLedgerId: ledger.id,
+  feeDetails: ledger.feeDetails,
+  amountToBePaid: ledger.amountToBePaid,
+  amountPaid: ledger.amountPaid,
+  amountToPay: ledger.amountToPay,
+  netAmount: ledger.netAmount,
+  academicYear: ledger.academicYear,
+  paymentStatus: ledger.paymentStatus,
+  adjustAmount: "0.00"
+}));
+
+// Shapes a student's pending ledgers into refund rows for Fine Paid, where the fine is adjusted.
+const toFineAdjustLedgerRows = (ledgers: Array<any>) => ledgers.map((ledger: any) => ({
+  id: ledger.id,
+  feeName: ledger.feeDetails,
+  academicYear: ledger.academicYear,
+  netAmount: ledger.netAmount,
+  amountPaid: ledger.amountPaid,
+  amountToBePaid: ledger.amountToBePaid,
+  paymentStatus: ledger.paymentStatus,
+  refundAmount: 0,
+  isSelected: false
+}));
 
 const FeeRefundPage = () => {
   const location: any = useLocation();
@@ -184,6 +229,15 @@ const FeeRefundPage = () => {
   const [selectedAdjustableStudentState, setSelectedAdjustableStudentState] = useState<any>(null);
   const [adjustingFeeLedgerState, setAdjustingFeeLedgerState] = useState<Array<any>>([]);
   const [allAdjustLedgerSelectedState, setAllAdjustLedgerSelectedState] = useState(false);
+  const [finePaidReceiptsState, setFinePaidReceiptsState] = useState<Array<any>>([]);
+  const [selectedFineReceiptState, setSelectedFineReceiptState] = useState<any>(null);
+  const [fineReceiptModalState, setFineReceiptModalState] = useState({
+    showModal: false,
+    selectedReceiptId: '',
+    refundFineAmount: ''
+  });
+  // get_ledgers_fee_adjust also serves the ADJUSTMENT student search; this marks a Fine Paid request.
+  const fineLedgersRequestRef = useRef(false);
   const [showWarningModalState, setShowWarningModalState] = useState({
     showModal: false,
     warningMessage: '',
@@ -244,7 +298,17 @@ const FeeRefundPage = () => {
     }
     else if (getLedgerForFeeAdjustResp && getLedgerForFeeAdjustResp !== prevGetLedgerForFeeAdjustResp) {
       // const { ledgers } = getLedgerForFeeAdjustResp;
-      if (Array.isArray(getLedgerForFeeAdjustResp)) {
+      if (Array.isArray(getLedgerForFeeAdjustResp) && fineLedgersRequestRef.current) {
+        fineLedgersRequestRef.current = false;
+        if (getLedgerForFeeAdjustResp.length === 0) {
+          setShowWarningModalState(prevState => ({
+            ...prevState, showModal: true,
+            warningMessage: 'There is no pending ledger to adjust the fine amount for the selected student.',
+            studentName: selectedStudentState?.studentName || ""
+          }));
+        }
+        setFeeRefundList(toFineAdjustLedgerRows(getLedgerForFeeAdjustResp));
+      } else if (Array.isArray(getLedgerForFeeAdjustResp)) {
         if (getLedgerForFeeAdjustResp.length === 0) {
           setShowWarningModalState(prevState => ({
             ...prevState, showModal: true,
@@ -253,20 +317,7 @@ const FeeRefundPage = () => {
           }));
           setAdjustingFeeLedgerState([]);
         } else {
-          const updateStudentFeeLedger: any = [];
-          for (let i = 0; i < getLedgerForFeeAdjustResp.length; i++) {
-            updateStudentFeeLedger.push({
-              studentLedgerId: getLedgerForFeeAdjustResp[i].id,
-              feeDetails: getLedgerForFeeAdjustResp[i].feeDetails,
-              amountToBePaid: getLedgerForFeeAdjustResp[i].amountToBePaid,
-              amountPaid: getLedgerForFeeAdjustResp[i].amountPaid,
-              amountToPay: getLedgerForFeeAdjustResp[i].amountToPay,
-              academicYear: getLedgerForFeeAdjustResp[i].academicYear,
-              paymentStatus: getLedgerForFeeAdjustResp[i].paymentStatus,
-              adjustAmount: "0.00"
-            });
-          }
-          setAdjustingFeeLedgerState(updateStudentFeeLedger);
+          setAdjustingFeeLedgerState(toAdjustingLedgerRows(getLedgerForFeeAdjustResp));
         }
       }
     }
@@ -322,9 +373,18 @@ const FeeRefundPage = () => {
       if (studentRefundLedgerResp.length === 0) {
         setShowWarningModalState(prevState => ({
           ...prevState, showModal: true,
-          warningMessage: 'There is no fee to refund for the selected student.',
+          warningMessage: addFeeRefundForm.values.refundFor === "FINE_PAID"
+            ? 'There is no fine paid receipt to refund for the selected student.'
+            : 'There is no fee to refund for the selected student.',
           studentName: selectedStudentState?.studentName || ""
         }));
+      }
+      if (addFeeRefundForm.values.refundFor === "FINE_PAID") {
+        setFinePaidReceiptsState(studentRefundLedgerResp);
+        if (studentRefundLedgerResp.length > 0) {
+          setFineReceiptModalState({ showModal: true, selectedReceiptId: '', refundFineAmount: '' });
+        }
+        return;
       }
       setFeeRefundList(studentRefundLedgerResp?.map((item: any) => ({
         ...item,
@@ -375,6 +435,15 @@ const FeeRefundPage = () => {
           return item;
         }
       }).filter(f => f)
+      if (values.refundFor === "FINE_PAID") {
+        // Fine Paid refunds also carry the receipt the fine was collected on, plus the
+        // mandatory supporting document, so they go as multipart like concession documents.
+        const formData = new FormData();
+        values.attachments.forEach((file: File) => formData.append("file", file));
+        formData.append("request", JSON.stringify({ ...payload, receiptId: selectedFineReceiptState?.id }));
+        dispatch(addFeeRefundAct(generateActionPayload("add_fee_refund", undefined, formData)));
+        return;
+      }
 
       dispatch(addFeeRefundAct(generateActionPayload("add_fee_refund", undefined, payload)));
     },
@@ -426,6 +495,7 @@ const FeeRefundPage = () => {
       setFeeRefundList([])
     }
     setSelectedStudentState(null);
+    clearFinePaidReceipts();
     dispatch(setStudentsListAct({}));
     dispatch(setStudentRefundLedgersAct(undefined));
   }
@@ -439,13 +509,52 @@ const FeeRefundPage = () => {
         academicYearId, branchCurriculumId, branchClassId,
       }
     });
+    setFeeRefundList([]);
+    setAllFeeSelectedState(false);
+    setAdjustingFeeLedgerState([]);
+    setAllAdjustLedgerSelectedState(false);
+    clearFinePaidReceipts();
     if (studentDetailId && academicYearId) {
       // const params = { studentDetailId: 1, academicYearId: 2, refundFor };
-      const params = { studentDetailId, academicYearId, refundFor: value };
-      dispatch(getStudentRefundLedgerAct(generateActionPayload("get_student_refund_ledger", undefined, params)));
+      loadRefundRows(studentDetailId, academicYearId, value);
     }
     dispatch(setStudentsListAct({}));
     dispatch(setStudentRefundLedgersAct(undefined));
+  }
+
+  function clearFinePaidReceipts() {
+    setFinePaidReceiptsState([]);
+    setSelectedFineReceiptState(null);
+  }
+
+  // Fine Paid first lists the student's receipts on which a fine was collected (picked in a modal);
+  // other types list the refundable fee ledgers directly.
+  function loadRefundRows(studentDetailId: any, academicYearId: any, refundFor: string) {
+    if (refundFor === "FINE_PAID") {
+      clearFinePaidReceipts();
+      setFeeRefundList([]);
+      setAllFeeSelectedState(false);
+      if (USE_SAMPLE_FINE_PAID_REFUND) {
+        setFinePaidReceiptsState(sampleFinePaidReceipts);
+        setFineReceiptModalState({ showModal: true, selectedReceiptId: '', refundFineAmount: '' });
+        return;
+      }
+    }
+    const params = { studentDetailId, academicYearId, refundFor };
+    dispatch(getStudentRefundLedgerAct(generateActionPayload("get_student_refund_ledger", undefined, params)));
+  }
+
+  // The selected receipt's fine is adjusted against the student's ledgers that still have an amount due.
+  function loadFineAdjustLedgers(studentId: any) {
+    if (USE_SAMPLE_FINE_PAID_REFUND) {
+      setFeeRefundList(toFineAdjustLedgerRows(samplePendingLedgersForFineAdjust));
+      return;
+    }
+    setFeeRefundList([]);
+    if (studentId) {
+      fineLedgersRequestRef.current = true;
+      dispatch(getLedgerForFeeAdjustAct(generateActionPayload("get_ledgers_fee_adjust", { id: studentId })));
+    }
   }
 
 
@@ -480,11 +589,17 @@ const FeeRefundPage = () => {
         branchCurriculumId: curriculumId,
         branchClassId: classId,
       }))
-      const params = { studentDetailId: studentId, academicYearId, refundFor };
-      dispatch(getStudentRefundLedgerAct(generateActionPayload("get_student_refund_ledger", undefined, params)));
+      if (refundFor === "FINE_PAID") {
+        // Drop the amount and documents picked for the previous student.
+        addFeeRefundForm.setValues((prev: any) => ({
+          ...prev, finalRefundableAmount: "0.00", paymentAmount: "0.00", attachments: []
+        }))
+      }
+      loadRefundRows(studentId, academicYearId, refundFor);
     } else {
       const { refundFor, branchCurriculumId, branchClassId, academicYearId } = addFeeRefundForm.values;
       setSelectedStudentState(null);
+      clearFinePaidReceipts();
       dispatch(setStudentsListAct({}));
       dispatch(setStudentRefundLedgersAct(undefined));
       addFeeRefundForm.resetForm({
@@ -527,6 +642,7 @@ const FeeRefundPage = () => {
         instituteDeptNames: ["ACADEMICS", "TRANSPORT"],
         paymentStatus: "unpaid"
       };
+      fineLedgersRequestRef.current = false;
       dispatch(getLedgerForFeeAdjustAct(generateActionPayload("get_ledgers_fee_adjust", { id: studentId })));
       // dispatch(getStudentRefundLedgerAct(generateActionPayload("get_student_refund_ledger", undefined, params)));
     }
@@ -832,6 +948,72 @@ useEffect(() => {
       paymentAmount: +totalAmt,
     }))
     setFeeRefundList(filterList);
+  }
+
+  //FINE_PAID
+  function openFineReceiptModalHndlr() {
+    setFineReceiptModalState({
+      showModal: true,
+      selectedReceiptId: selectedFineReceiptState ? String(selectedFineReceiptState.id) : '',
+      refundFineAmount: selectedFineReceiptState ? getAmountValueWithDecimal(selectedFineReceiptState.refundFineAmount) : ''
+    });
+  }
+
+  function toggleFineReceiptModalHndlr() {
+    setFineReceiptModalState(prevState => ({ ...prevState, showModal: false }));
+  }
+
+  // Picking a receipt starts its refundable fine at the full amount still refundable.
+  const fineReceiptSelectHndlr = useCallback((event: any) => {
+    const receiptId = event.currentTarget.getAttribute("data-id") || '';
+    const receipt = finePaidReceiptsState.find((item: any) => String(item.id) === receiptId);
+    setFineReceiptModalState(prevState => ({
+      ...prevState,
+      selectedReceiptId: receiptId,
+      refundFineAmount: getAmountValueWithDecimal(getRefundableFineAmount(receipt))
+    }));
+  }, [finePaidReceiptsState]);
+
+  const onChangeRefundableFineHndlr = (event: any) => {
+    const value = event.target.value.replace(/^0+(?=\d)/, "");
+    setFineReceiptModalState(prevState => ({ ...prevState, refundFineAmount: value }));
+  }
+
+  // Applies the receipt picked in the modal and lists the ledgers its fine can be adjusted to.
+  function confirmFineReceiptHndlr() {
+    const { selectedReceiptId, refundFineAmount } = fineReceiptModalState;
+    const receipt = finePaidReceiptsState.find((item: any) => String(item.id) === selectedReceiptId);
+    setSelectedFineReceiptState(receipt ? { ...receipt, refundFineAmount: +refundFineAmount || 0 } : null);
+    setFineReceiptModalState(prevState => ({ ...prevState, showModal: false }));
+    // Amounts adjusted against the previous receipt's fine no longer apply.
+    setAllFeeSelectedState(false);
+    applyFineRefundAmount(0);
+    loadFineAdjustLedgers(addFeeRefundForm.values.studentDetailId);
+  }
+
+  const onChangeFineAdjustAmountHndlr = (event: any, id: any) => {
+    const value = event.target.value.replace(/^0+(?=\d)/, "");
+    const updatedLedgers = feeRefundList.map((ledger: any) => (
+      +ledger.id === +id ? { ...ledger, refundAmount: value } : ledger
+    ));
+    const totalAmt = updatedLedgers.reduce((sum: number, ledger: any) => (
+      ledger.isSelected ? sum + (+ledger.refundAmount || 0) : sum
+    ), 0);
+    // Together the ledgers can take at most the fine amount entered for the receipt.
+    if (Math.round(totalAmt * 100) > Math.round((+selectedFineReceiptState?.refundFineAmount || 0) * 100)) {
+      return;
+    }
+    setFeeRefundList(updatedLedgers);
+    applyFineRefundAmount(totalAmt);
+  }
+
+  // Same bookkeeping the other refund types do when their refund amount changes.
+  function applyFineRefundAmount(totalAmt: number) {
+    addFeeRefundForm.setValues((prev: any) => ({
+      ...prev,
+      finalRefundableAmount: totalAmt,
+      paymentAmount: totalAmt,
+    }));
   }
 
   //CT_ADJUSTMENT
@@ -1397,16 +1579,34 @@ useEffect(() => {
   const hasCTSelectedLedger =
     adjustingFeeLedgerState.some((row: any) => row.isSelected);
 
+  const isFinePaid =
+    addFeeRefundForm.values.refundFor === "FINE_PAID";
+
+  // The fine amount entered for the receipt has to be fully adjusted across the ledgers.
+  const fineToAdjust = +selectedFineReceiptState?.refundFineAmount || 0;
+  const fineBalanceToAdjust = Math.max(fineToAdjust - finalRefund, 0);
+
   const disableRefundBtn =
-    isCTAdjustment &&
-    (
-      !hasCTSelectedLedger ||
-      !isCTAdjustmentSubmitValid ||
-      hasCTRowErrors
-    );
+    (isCTAdjustment &&
+      (
+        !hasCTSelectedLedger ||
+        !isCTAdjustmentSubmitValid ||
+        hasCTRowErrors
+      )) ||
+    (isFinePaid && (
+      !selectedFineReceiptState ||
+      finalRefund <= 0 ||
+      Math.round(finalRefund * 100) !== Math.round(fineToAdjust * 100)
+    ));
+
+  const fineReceiptSelectColumns = useMemo(
+    () => finePaidReceiptSelectColumns(fineReceiptSelectHndlr),
+    [fineReceiptSelectHndlr]
+  );
+
   const refundColumns = useMemo(
     () =>
-      feeRefundColumns(
+      (isFinePaid ? finePaidAdjustLedgerColumns : feeRefundColumns)(
         allFeeSelectedState,
         isCTAdjustment
           ? studentCheckHndlrCTAdjustment
@@ -1415,7 +1615,7 @@ useEffect(() => {
           ? selectAllFeeHndlrCTAdjustment
           : selectAllFeeHndlr
       ),
-    [allFeeSelectedState, isCTAdjustment, studentCheckHndlr, studentCheckHndlrCTAdjustment, selectAllFeeHndlr, selectAllFeeHndlrCTAdjustment]
+    [isFinePaid, allFeeSelectedState, isCTAdjustment, studentCheckHndlr, studentCheckHndlrCTAdjustment, selectAllFeeHndlr, selectAllFeeHndlrCTAdjustment]
   );
 
   const adjustmentColumns = useMemo(() => {
@@ -1589,14 +1789,38 @@ useEffect(() => {
                     </div>
                   </div>
                   <div className="tw-flex-wrap tw-py-2 tw-mb-2 tw-border-b-2 tw-border-dashed tw-border-[#CFCFCF]">
+                    {isFinePaid && (
+                      <div className="tw-flex tw-items-center tw-justify-between tw-mb-2">
+                        <div>
+                          <h6 className="tw-m-0">Adjust Fine To Ledgers</h6>
+                          {selectedFineReceiptState && (
+                            <span className="tw-text-sm tw-text-gray-500">
+                              Receipt {selectedFineReceiptState.receiptNumber} · Fine to adjust ₹
+                              {getAmountValueWithDecimal(fineToAdjust)} · Balance ₹
+                              {getAmountValueWithDecimal(fineBalanceToAdjust)}
+                            </span>
+                          )}
+                        </div>
+                        <Button
+                          variant="hoverInfo"
+                          type="button"
+                          onClick={openFineReceiptModalHndlr}
+                          disabled={finePaidReceiptsState.length === 0}
+                        >
+                          {selectedFineReceiptState ? "Change Receipt" : "Select Receipt"}
+                        </Button>
+                      </div>
+                    )}
                     <TableContainer
                       columns={refundColumns}
                       data={Array.isArray(feeRefundList) ? feeRefundList : []}
                       tableClass="tw-mb-0"
                       onChangeInputHndlr={
-                        isCTAdjustment
-                          ? onChangeInputHndlrCTAdjustment
-                          : onChangeInputHndlr
+                        isFinePaid
+                          ? onChangeFineAdjustAmountHndlr
+                          : isCTAdjustment
+                            ? onChangeInputHndlrCTAdjustment
+                            : onChangeInputHndlr
                       }
                       divClass="tw-overflow-x-auto"
                       theadClass="tw-bg-gray-100 tw-text-gray-500 tw-align-middle"
@@ -1706,32 +1930,57 @@ useEffect(() => {
                         </div>
                       </div>
 
+                      {isFinePaid && (
+                        <div className="tw-flex tw-mt-3">
+                          <div className="tw-flex-1 tw-p-0">
+                            <h6 className="tw-m-0">Attachment <span className="tw-text-red-500">*</span></h6>
+                          </div>
+                          <div className="tw-flex-1">
+                            <MultipleFileUpload
+                              key={`fine-attachments-${addFeeRefundForm.values.studentDetailId}`}
+                              name="attachments"
+                              prevFiles={addFeeRefundForm.values.attachments}
+                              onChange={(files: Array<File>) => addFeeRefundForm.setFieldValue("attachments", files)}
+                              accept={FINE_REFUND_ATTACHMENT_TYPES}
+                              acceptErrorText="Only PDF or image (JPG, PNG) files are allowed."
+                              maxSizeInMb={2}
+                              helperText="PDF or image (JPG, PNG). Max file size is 2MB."
+                              error={(addFeeRefundForm.touched.attachments && addFeeRefundForm.errors.attachments)
+                                ? addFeeRefundForm.errors.attachments.toString()
+                                : ""}
+                            />
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   </div>
 
-                  <div className="tw-flex tw-flex-wrap tw-mb-2">
-                    <div className="tw-w-1/3">
-                      <h6 className="tw-font-normal tw-text-gray-500 tw-mb-3">PAYMENT DETAILS</h6>
-                      <SelectInput
-                        name="paymentMode"
-                        formgroupClassName={
-                          addFeeRefundForm?.values?.paymentMode === "CT_ADJUSTMENT"
-                            ? "tw-mb-0 search-box"
-                            : "tw-mb-3 search-box"
-                        }
-                        value={addFeeRefundForm.values.paymentMode}
-                        onChange={onChangePaymentModeHndlr}
-                        onBlur={addFeeRefundForm.handleBlur}
-                        menuItems={paymentOptions}
-                        valueKey="id"
-                        textKey="name"
-                        defaultSelect="Select"
-                        inputClassName="tw-text-gray-500"
-                        invalid={(addFeeRefundForm.touched.paymentMode && addFeeRefundForm.errors.paymentMode) ? true : false}
-                        error={(addFeeRefundForm.touched.paymentMode && addFeeRefundForm.errors.paymentMode) ? addFeeRefundForm.errors.paymentMode : ""}
-                      />
+                  {!isFinePaid && (
+                    <div className="tw-flex tw-flex-wrap tw-mb-2">
+                      <div className="tw-w-1/3">
+                        <h6 className="tw-font-normal tw-text-gray-500 tw-mb-3">PAYMENT DETAILS</h6>
+                        <SelectInput
+                          name="paymentMode"
+                          formgroupClassName={
+                            addFeeRefundForm?.values?.paymentMode === "CT_ADJUSTMENT"
+                              ? "tw-mb-0 search-box"
+                              : "tw-mb-3 search-box"
+                          }
+                          value={addFeeRefundForm.values.paymentMode}
+                          onChange={onChangePaymentModeHndlr}
+                          onBlur={addFeeRefundForm.handleBlur}
+                          menuItems={paymentOptions}
+                          valueKey="id"
+                          textKey="name"
+                          defaultSelect="Select"
+                          inputClassName="tw-text-gray-500"
+                          invalid={(addFeeRefundForm.touched.paymentMode && addFeeRefundForm.errors.paymentMode) ? true : false}
+                          error={(addFeeRefundForm.touched.paymentMode && addFeeRefundForm.errors.paymentMode) ? addFeeRefundForm.errors.paymentMode : ""}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {(addFeeRefundForm?.values?.paymentMode === "CHEQUE") &&
                     <div className="tw-flex tw-flex-wrap">
@@ -1964,6 +2213,38 @@ useEffect(() => {
         <div className="modal-footer">
           <button className="btn btn-success">Ok</button>
         </div> */}
+      </ModalContainerUpdated>
+      <ModalContainerUpdated
+        id="fine-paid-receipt-select"
+        isOpen={fineReceiptModalState.showModal}
+        toggle={toggleFineReceiptModalHndlr}
+        modalTitle="Select Fine Paid Receipt"
+        modalSize="xl"
+      >
+        <div className="modal-body">
+          <TableContainer
+            columns={fineReceiptSelectColumns}
+            data={finePaidReceiptsState}
+            rowDataInfo={fineReceiptModalState}
+            onChangeInputHndlr={onChangeRefundableFineHndlr}
+            tableClass="tw-mb-0"
+            divClass="tw-overflow-x-auto"
+            theadClass="tw-bg-gray-100 tw-text-gray-500 tw-align-middle"
+          />
+        </div>
+        <div className="modal-footer">
+          <Button variant="secondary" type="button" onClick={toggleFineReceiptModalHndlr}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={confirmFineReceiptHndlr}
+            disabled={!fineReceiptModalState.selectedReceiptId || !(+fineReceiptModalState.refundFineAmount > 0)}
+          >
+            Select
+          </Button>
+        </div>
       </ModalContainerUpdated>
     </>
   );

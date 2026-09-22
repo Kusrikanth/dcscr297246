@@ -17,7 +17,10 @@ interface IFileUpload {
     maxSizeInMb?:number | undefined;
     helperText?:string;
     error?: string | any;
-}   
+    /** MIME types / extensions to allow; other files are rejected with acceptErrorText. */
+    accept?: string | string[];
+    acceptErrorText?: string;
+}
 
 export const MultipleFileUpload: React.FC<IFileUpload> = (props) => {
     const [files, setFiles] = useState<any>(props.prevFiles || []);
@@ -55,8 +58,12 @@ export const MultipleFileUpload: React.FC<IFileUpload> = (props) => {
                 <div className={props.containerClass}>
                     <div className={props.bodyClass || classnames(`tw-border tw-rounded tw-p-2 ${props.error && "tw-border-danger"}`)}>
                         <Dropzone
+                            accept={props.accept}
                             onDrop={(acceptedFiles) => {
                                 handleAcceptedFiles(acceptedFiles);
+                            }}
+                            onDropRejected={() => {
+                                toast.warning(props.acceptErrorText || "This file type is not allowed.");
                             }}
                         >
                             {({ getRootProps, getInputProps }) => (

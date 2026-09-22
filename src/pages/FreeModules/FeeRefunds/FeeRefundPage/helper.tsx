@@ -5,6 +5,7 @@ import { IOptionsHrtl } from "../../../../Components/Common/MenuOptions";
 import { FeeDetailsTableData, NewRefundTableData } from "./feeRefundPageTypes";
 import { TextInputGroup } from "../../../../Components/Common";
 import { getAmountValueWithDecimal } from "../../../../utility/commonutility";
+import { getDdMmYyyyWithMonthNameFormat } from "../../../../utility/dateutility";
 
 export const receiptForOptions = [
   {
@@ -264,6 +265,241 @@ export function feeRefundColumns(isAllSelected: any, studentCheckHndlr: any, sel
 
   ];
 }
+
+
+export const getRefundableFineAmount = (receipt: any) =>
+  Math.max((+receipt?.fine || 0) - (+receipt?.refundedFineAmount || 0), 0);
+
+const EditFineAdjustAmount = ({ row: { original }, onChangeInputHndlr }: any) => {
+
+  function onChange(event: any) {
+    const { value } = event.target;
+    // A ledger can take at most its due amount.
+    if (/^[0-9]*\.?[0-9]*$/.test(value) && +value <= (+original?.amountToBePaid || 0)) {
+      onChangeInputHndlr(event, original.id)
+    }
+  }
+
+  return (
+    <div className="input-group input-group-sm tw-w-[120px]">
+      <span className="input-group-text">
+        <RupeeSvg width="11px" height="11px" fill={"#878a99"} />
+      </span>
+      <input name={`refundAmount`} type="text" className="form-control" value={original?.refundAmount ?? "0"}
+        onChange={onChange}
+        disabled={!original.isSelected}
+      />
+    </div>
+  );
+};
+
+const finePaidReceiptInfoColumns = () => [
+  {
+    Header: "Receipt No",
+    accessor: "receiptNumber",
+    disableSortBy: true,
+  },
+  {
+    Header: "Receipt Date",
+    accessor: "receiptDate",
+    disableSortBy: true,
+    Cell: ({ row: { original } }: any) => {
+      return (
+        <span className="tw-text-nowrap">
+          {original?.receiptDate ? getDdMmYyyyWithMonthNameFormat(new Date(original.receiptDate)) : "-"}
+        </span>
+      );
+    },
+  },
+  {
+    Header: "Fee Names",
+    accessor: "feeDetailVOList",
+    disableSortBy: true,
+    Cell: ({ row: { original } }: any) => {
+      return (
+        <span>
+          {Array.isArray(original?.feeDetailVOList)
+            ? original.feeDetailVOList.map((fee: any) => fee?.feeDetail).join(", ")
+            : "-"}
+        </span>
+      );
+    },
+  },
+  {
+    Header: "Payment Mode",
+    accessor: "paymentMode",
+    disableSortBy: true,
+  },
+  {
+    Header: "Receipt Amount (₹)",
+    accessor: "currentPaidAmount",
+    disableSortBy: true,
+    Cell: ({ row: { original } }: any) => {
+      return (
+        <span>{getAmountValueWithDecimal(original?.currentPaidAmount)}</span>
+      );
+    },
+  },
+  {
+    Header: "Fine Paid (₹)",
+    accessor: "fine",
+    disableSortBy: true,
+    Cell: ({ row: { original } }: any) => {
+      return (
+        <span>{getAmountValueWithDecimal(original?.fine)}</span>
+      );
+    },
+  },
+];
+
+// Editable for the selected receipt only: how much of its fine to refund, up to what is still refundable.
+// The modal's draft selection and amount arrive through the table's rowDataInfo.
+const EditRefundableFine = ({ row: { original }, rowDataInfo, onChangeInputHndlr }: any) => {
+  const maxRefundableFine = getRefundableFineAmount(original);
+  const isSelected = String(original.id) === String(rowDataInfo?.selectedReceiptId);
+
+  function onChange(event: any) {
+    const { value } = event.target;
+    if (/^[0-9]*\.?[0-9]*$/.test(value) && +value <= maxRefundableFine) {
+      onChangeInputHndlr(event, original.id)
+    }
+  }
+
+  return (
+    <>
+      <div className="input-group input-group-sm tw-w-[120px]">
+        <span className="input-group-text">
+          <RupeeSvg width="11px" height="11px" fill={"#878a99"} />
+        </span>
+        <input name={`refundFineAmount`} type="text" className="form-control"
+          value={isSelected ? rowDataInfo?.refundFineAmount : getAmountValueWithDecimal(maxRefundableFine)}
+          onChange={onChange}
+          disabled={!isSelected}
+        />
+      </div>
+      {isSelected && (
+        <span className="tw-text-xs tw-text-gray-500">Max {getAmountValueWithDecimal(maxRefundableFine)}</span>
+      )}
+    </>
+  );
+};
+
+// Receipts on which a fine was collected, listed in the select-receipt modal (single select).
+export function finePaidReceiptSelectColumns(fineReceiptSelectHndlr: any) {
+  return [
+    {
+      Header: "",
+      accessor: "isSelected",
+      columnClassName: "w-5",
+      disableSortBy: true,
+      Cell: ({ row: { original }, rowDataInfo }: any) => {
+        return (
+          <input
+            type="radio"
+            className="form-check-input"
+            name="fine-paid-receipt"
+            data-id={original.id}
+            checked={String(original.id) === String(rowDataInfo?.selectedReceiptId)}
+            onChange={fineReceiptSelectHndlr}
+            disabled={getRefundableFineAmount(original) <= 0}
+          />
+        );
+      }
+    },
+    ...finePaidReceiptInfoColumns(),
+    {
+      Header: "Refundable Fine",
+      accessor: "refundFineAmount",
+      disableSortBy: true,
+      Cell: EditRefundableFine,
+    },
+  ];
+}
+
+const readOnlyAmountCell = (key: string) => ({ row: { original } }: any) => {
+  return (
+    <div className="input-group input-group-sm tw-w-[120px]">
+      <span className="input-group-text">
+        <RupeeSvg width="11px" height="11px" fill={"#878a99"} />
+      </span>
+      <input type="text" className="form-control" value={getAmountValueWithDecimal(original?.[key])}
+        disabled={true}
+      />
+    </div>
+  );
+};
+
+// The student's ledgers with an amount due, across which the selected receipt's fine is adjusted.
+export function finePaidAdjustLedgerColumns(isAllSelected: any, studentCheckHndlr: any, selectAllFeeHndlr: any) {
+  // Same select and Fee Names columns the other refund types use.
+  const [selectColumn, feeNameColumn] = feeRefundColumns(isAllSelected, studentCheckHndlr, selectAllFeeHndlr);
+  return [
+    selectColumn,
+    feeNameColumn,
+    {
+      Header: "Net Amount",
+      accessor: "netAmount",
+      disableSortBy: true,
+      Cell: readOnlyAmountCell("netAmount"),
+    },
+    {
+      Header: "Amount Paid",
+      accessor: "amountPaid",
+      disableSortBy: true,
+      Cell: readOnlyAmountCell("amountPaid"),
+    },
+    {
+      Header: "Due Amount",
+      accessor: "amountToBePaid",
+      disableSortBy: true,
+      Cell: readOnlyAmountCell("amountToBePaid"),
+    },
+    {
+      Header: "Adjust Amount",
+      accessor: "refundAmount",
+      disableSortBy: true,
+      Cell: EditFineAdjustAmount,
+    },
+  ];
+}
+
+// TODO: remove once the fine-paid receipts API for refunds is available. The existing
+// /studentFeeLedgers/for/refund endpoint returns ledgers and fails for refundFor=FINE_PAID.
+export const USE_SAMPLE_FINE_PAID_REFUND = true;
+
+export const sampleFinePaidReceipts = [
+  {
+    id: 90101, receiptNumber: "RCPT-2026-0512", receiptDate: "2026-07-18",
+    feeDetailVOList: [{ feeDetail: "Tuition Fee - Term 1" }],
+    paymentMode: "ONLINE", currentPaidAmount: 23500, fine: 500, refundedFineAmount: 0,
+  },
+  {
+    id: 90102, receiptNumber: "RCPT-2026-0587", receiptDate: "2026-08-20",
+    feeDetailVOList: [{ feeDetail: "Transport Fee - Term 1" }],
+    paymentMode: "CASH", currentPaidAmount: 4250, fine: 250, refundedFineAmount: 0,
+  },
+  {
+    id: 90103, receiptNumber: "RCPT-2026-0633", receiptDate: "2026-09-10",
+    feeDetailVOList: [{ feeDetail: "Tuition Fee - Term 2" }, { feeDetail: "Transport Fee - Term 2" }],
+    paymentMode: "CHEQUE", currentPaidAmount: 15800, fine: 300, refundedFineAmount: 100,
+  },
+];
+
+// Same shape as the get_ledgers_fee_adjust response (the student's ledgers with an amount due).
+export const samplePendingLedgersForFineAdjust = [
+  {
+    id: 90201, feeDetails: "Tuition Fee - Term 2", academicYear: "2026-2027",
+    amountToPay: 25000, netAmount: 23000, amountPaid: 11500, amountToBePaid: 11500, paymentStatus: "PARTIALLY_PAID",
+  },
+  {
+    id: 90202, feeDetails: "Transport Fee - Term 2", academicYear: "2026-2027",
+    amountToPay: 8000, netAmount: 8000, amountPaid: 0, amountToBePaid: 8000, paymentStatus: "UNPAID",
+  },
+  {
+    id: 90203, feeDetails: "Tuition Fee - Term 3", academicYear: "2026-2027",
+    amountToPay: 25000, netAmount: 23000, amountPaid: 0, amountToBePaid: 23000, paymentStatus: "UNPAID",
+  },
+];
 
 
 const editFeeRefundTableCell = ({
