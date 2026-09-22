@@ -469,6 +469,7 @@ const FeeRefundPage = () => {
       : paymentMode === "ADJUSTMENT" ? selectedAdjustableStudentState : null;
     return {
       id: `sample-${now.getTime()}`,
+      refundFor,
       refundDate: now.toISOString(),
       studentName: selectedStudentState?.studentName,
       studentCode: selectedStudentState?.studentCode,

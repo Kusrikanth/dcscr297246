@@ -11,6 +11,7 @@ import {
   USE_SAMPLE_FEE_REFUNDS_LIST,
   sampleFeeRefundsList,
 } from "./helper";
+import { receiptForOptions as refundTypeOptions } from "./FeeRefundPage/helper";
 //Custom Hooks
 import { useAppDispatch, useAppSelector } from "../../../hooks/storehook";
 
@@ -42,6 +43,7 @@ const initialFilterState = {
   academicYearId: "",
   branchCurriculumId: "",
   branchId: "",
+  refundFor: "",
 };
 const FeeRefunds = () => {
   const history = useHistory();
@@ -292,17 +294,24 @@ const FeeRefunds = () => {
   }, [showInstituteAdminUI]),
     feeRefundsData = useMemo(() => {
       const hasLiveRows = Array.isArray(feeRefundsResp?.data) && feeRefundsResp.data.length > 0;
-      const listData = USE_SAMPLE_FEE_REFUNDS_LIST && !hasLiveRows ? sampleFeeRefundsList : feeRefundsResp;
-      if (!sampleCreatedRefund) {
-        return listData;
+      const showSampleList = USE_SAMPLE_FEE_REFUNDS_LIST && !hasLiveRows;
+      if (!showSampleList && !sampleCreatedRefund) {
+        return feeRefundsResp;
       }
-      // The refund just created in sample mode isn't on the server, so show it at the top.
+      // Sample rows, and the refund just created in sample mode, never reach the server: show the
+      // created one at the top and apply the refund type filter to them here.
+      const matchesRefundType = (row: any) => !filterState.refundFor || row?.refundFor === filterState.refundFor;
+      const sampleRows = [
+        ...(sampleCreatedRefund ? [sampleCreatedRefund] : []),
+        ...(showSampleList ? sampleFeeRefundsList.data : []),
+      ].filter(matchesRefundType);
+      const liveRows = !showSampleList && Array.isArray(feeRefundsResp?.data) ? feeRefundsResp.data : [];
       return {
-        ...listData,
-        data: [sampleCreatedRefund, ...(Array.isArray(listData?.data) ? listData.data : [])],
-        totalElements: (listData?.totalElements || 0) + 1,
+        ...(showSampleList ? sampleFeeRefundsList : feeRefundsResp),
+        data: [...sampleRows, ...liveRows],
+        totalElements: (showSampleList ? 0 : feeRefundsResp?.totalElements || 0) + sampleRows.length,
       };
-    }, [feeRefundsResp, sampleCreatedRefund]),
+    }, [feeRefundsResp, sampleCreatedRefund, filterState.refundFor]),
     { data: refundsList, pageNumber, totalPages, totalElements } = feeRefundsData || {};
   return (
     <>
@@ -415,6 +424,20 @@ const FeeRefunds = () => {
                     valueKey="id"
                     textKey="shortName"
                     labelText="Class"
+                    floatingLabel
+                    formgroupClassName="tw-mb-0"
+                  />
+                </div>
+
+                <div className="tw-col-span-2">
+                  <SelectInput
+                    name="refundFor"
+                    value={filterState.refundFor}
+                    onChange={onChangeFilterHndlr}
+                    menuItems={refundTypeOptions}
+                    valueKey="id"
+                    textKey="name"
+                    labelText="Refund Type"
                     floatingLabel
                     formgroupClassName="tw-mb-0"
                   />

@@ -2,6 +2,7 @@
 import { convertUTCToISTTimeOnly, getDdMmYyyyWithMonthNameFormat, getFormattedDateddMMMYYYY } from "../../../utility/dateutility";
 import {  getDisplayAmountValue } from "../../../utility/commonutility";
 import { UserDetails } from "../../../Components/Common";
+import { receiptForOptions as refundTypeOptions } from "./FeeRefundPage/helper";
 
 export function generateColumns() {
   return [
@@ -48,6 +49,15 @@ export function generateColumns() {
       disableSortBy: true,
       Cell: ({ row: { original } }: any) => {
         return (<span className="tw-whitespace-nowrap">{original?.classShortName}</span>)
+      },
+    },
+    {
+      Header: "Refund Type",
+      accessor: "refundFor",
+      disableSortBy: true,
+      Cell: ({ row: { original } }: any) => {
+        const refundType = refundTypeOptions.find((option) => option.id === original?.refundFor);
+        return (<span className="tw-whitespace-nowrap">{refundType?.name || original?.refundFor || "-"}</span>)
       },
     },
     {
@@ -215,7 +225,7 @@ export const sampleFeeRefundsList = {
   totalElements: 3,
   data: [
     {
-      id: 1, refundDate: "2026-09-18", studentName: "2nd feb17th", studentCode: "1250286",
+      id: 1, refundFor: "FINE_PAID", refundDate: "2026-09-18", studentName: "2nd feb17th", studentCode: "1250286",
       branchName: "Mahendra Hills", curriculumName: "CBSE", classShortName: "II",
       refundAmount: 500, paymentMode: "", transactionId: "", transactionDate: "",
       adjustAmount: 500, adjustedStudentName: "2nd feb17th", adjustedStudentCode: "1250286",
@@ -224,7 +234,7 @@ export const sampleFeeRefundsList = {
       fileInfo: [{ id: 501, originalFileName: "fine-waiver-approval.pdf", s3URL: "" }],
     },
     {
-      id: 2, refundDate: "2026-09-12", studentName: "Aarav Sharma", studentCode: "1250114",
+      id: 2, refundFor: "EXCESS_AMOUNT", refundDate: "2026-09-12", studentName: "Aarav Sharma", studentCode: "1250114",
       branchName: "Mahendra Hills", curriculumName: "CBSE", classShortName: "V",
       refundAmount: 1500, paymentMode: "ONLINE", transactionId: "REF1122334455", transactionDate: "2026-09-12",
       adjustAmount: 0, adjustedStudentName: "", adjustedStudentCode: "",
@@ -233,7 +243,7 @@ export const sampleFeeRefundsList = {
       fileInfo: [{ id: 502, originalFileName: "excess-payment-proof.jpg", s3URL: "" }],
     },
     {
-      id: 3, refundDate: "2026-08-28", studentName: "Diya Reddy", studentCode: "1250233",
+      id: 3, refundFor: "AMOUNT_PAID", refundDate: "2026-08-28", studentName: "Diya Reddy", studentCode: "1250233",
       branchName: "Mahendra Hills", curriculumName: "CBSE", classShortName: "VIII",
       refundAmount: 4000, paymentMode: "CHEQUE", transactionId: "", transactionDate: "2026-08-28",
       adjustAmount: 0, adjustedStudentName: "", adjustedStudentCode: "",
