@@ -99,3 +99,15 @@
 .add-edit-html-modal .ql-container.ql-snow {
     height: 500px;
   }
+// Optional min-height for the editing area, set via --ql-min-height on a wrapper
+.ql-editor {
+    min-height: var(--ql-min-height, auto);
+}
+
+// Invalid state (mirrors .is-invalid on form controls)
+.quill-invalid {
+    .ql-toolbar.ql-snow,
+    .ql-container.ql-snow {
+        border-color: $form-feedback-invalid-color;
+    }
+}

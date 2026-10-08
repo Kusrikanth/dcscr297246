@@ -5,6 +5,8 @@ import {
     setManageNotificationAct,
     setComposeMessageAct, setCurriculumClassSectAct,
     setCommunicationErrorAct,
+    setUpdateNotificationAct,
+    setDeleteNotificationAct,
     setTemplateListAct,
     setSaveTemplateAct,
     setDeleteTemplateAct,
@@ -70,6 +72,26 @@ function* composeMessageGen(action: ICreatedActionType): any {
         yield put(setCommunicationErrorAct(response.error));
     } else {
         yield put(setComposeMessageAct({ statusCode: response.statusCode }));
+    }
+}
+
+function* updateNotificationGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(putData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setCommunicationErrorAct(response.error));
+    } else {
+        yield put(setUpdateNotificationAct({ statusCode: response.statusCode }));
+    }
+}
+
+function* deleteNotificationGen(action: ICreatedActionType): any {
+    const { payload } = action;
+    const response = yield call(deleteData, payload.endpoint, payload.payload, payload.optionalConfig);
+    if (response && response.error) {
+        yield put(setCommunicationErrorAct(response.error));
+    } else {
+        yield put(setDeleteNotificationAct({ statusCode: response.statusCode }));
     }
 }
 
@@ -438,6 +460,8 @@ function* getNotificationCampaignRecipientListGen(action: ICreatedActionType): a
 export default function* communicationSaga() {
     yield takeLatest(CommunicationConstants.GET_MANAGE_NOTIFICATION_REQUEST, getManageNotificationGen);
     yield takeLatest(CommunicationConstants.ADD_COMPOSE_MESSAGE_REQUEST, composeMessageGen);
+    yield takeLatest(CommunicationConstants.UPDATE_NOTIFICATION_REQUEST, updateNotificationGen);
+    yield takeLatest(CommunicationConstants.DELETE_NOTIFICATION_REQUEST, deleteNotificationGen);
     yield takeLatest(CommunicationConstants.GET_CURRICULUM_CLASS_SECT_REQUEST, getCurriculumClassSectGen);
     yield takeLatest(CommunicationConstants.EXPORT_NOTIFICATION_ITEM_BY_ID,exportNotificationItemByIdGen)
 

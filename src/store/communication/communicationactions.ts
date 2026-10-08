@@ -8,6 +8,8 @@ export { setEventByIdAct, resetWhatsAppNotificationValidateStudentsAct, resetNot
 // export { setCbseVerificationsAct } from "./communicationslice";
 export const getManageNotificationAct = createAction<INewActionType | undefined>(CommunicationConstants.GET_MANAGE_NOTIFICATION_REQUEST);
 export const composeMessageAct = createAction<INewActionType | undefined>(CommunicationConstants.ADD_COMPOSE_MESSAGE_REQUEST);
+export const updateNotificationAct = createAction<INewActionType | undefined>(CommunicationConstants.UPDATE_NOTIFICATION_REQUEST);
+export const deleteNotificationAct = createAction<INewActionType | undefined>(CommunicationConstants.DELETE_NOTIFICATION_REQUEST);
 export const getCurriculumClassSectAct = createAction<INewActionType | undefined>(CommunicationConstants.GET_CURRICULUM_CLASS_SECT_REQUEST);
 export const exportNotificationItemByIdAct = createAction<INewActionType | undefined>(CommunicationConstants.EXPORT_NOTIFICATION_ITEM_BY_ID);
 

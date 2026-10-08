@@ -2,6 +2,8 @@ export const communicationUrl = {
     get_manage_notificaiton: `/communication/api/send-messages/all`,
     get_curriculum_class_section: `/academic/api/class-section/v1/curriculum-classes-sections`,
     compose_message: `/communication/api/send-messages`,
+    update_notification: ({ id }: any) => `/communication/api/send-messages/${id}`,
+    delete_notification: ({ id }: any) => `/communication/api/send-messages/${id}`,
 
     //setting template
     get_template_list: `/communication/api/settings/template/v1/all`,

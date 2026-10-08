@@ -1,6 +1,8 @@
 export interface ICommunicationReducerState {
     manageNotificationResp: any;
     composeMessageResp: any;
+    updateNotificationResp: any;
+    deleteNotificationResp: any;
     curriculumClassSectResp: any;
     communicationErrorResp: any;
     exportNotificationItemByIdResp:any;

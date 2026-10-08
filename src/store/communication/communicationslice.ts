@@ -4,6 +4,8 @@ import { ICommunicationReducerState } from "./communicationtypes";
 const initialState: ICommunicationReducerState = {
     manageNotificationResp: undefined,
     composeMessageResp: undefined,
+    updateNotificationResp: undefined,
+    deleteNotificationResp: undefined,
     curriculumClassSectResp: undefined,
     communicationErrorResp: undefined,
     exportNotificationItemByIdResp: undefined,
@@ -64,6 +66,12 @@ export const communicationSlice = createSlice({
         },
         setComposeMessageAct: (state, action: PayloadAction<any>) => {
             state.composeMessageResp = action.payload;
+        },
+        setUpdateNotificationAct: (state, action: PayloadAction<any>) => {
+            state.updateNotificationResp = action.payload;
+        },
+        setDeleteNotificationAct: (state, action: PayloadAction<any>) => {
+            state.deleteNotificationResp = action.payload;
         },
         setCurriculumClassSectAct: (state, action: PayloadAction<any>) => {
             state.curriculumClassSectResp = action.payload;
@@ -209,6 +217,8 @@ export const {
     setComposeMessageAct, setCurriculumClassSectAct,
     setCommunicationErrorAct,
     setExportNotificationItemByIdAct,
+    setUpdateNotificationAct,
+    setDeleteNotificationAct,
     setTemplateListAct,
     setSaveTemplateAct,
     setDeleteTemplateAct,

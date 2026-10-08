@@ -1,10 +1,60 @@
 import React from 'react';
 import { MenuOptionHrtl, StatusLabel, UserDetails } from "../../../Components/Common";
-import { IOptionsHrtl, MoreActions } from "../../../Components/Common/MenuOptions";
+import { IOptionsHrtl } from "../../../Components/Common/MenuOptions";
 import { StatusCommunicationLogsDataTypes } from "./ManageAllNotifcationsTypes";
 import { getDateWithTimeFormat } from "../../../utility/dateutility";
 
-export function generateColumns(actionList: Array<IOptionsHrtl>) {
+const DESCRIPTION_PREVIEW_CHARS = 35;
+
+export const NOTIFICATION_STATUS = { DRAFT: "DRAFT", SENT: "SENT" } as const;
+
+/** A message saved with "Save as Draft" that has not been sent yet. */
+export function isDraftNotification(record?: any) {
+    if (record?.isDraft === true || record?.draft === true) return true;
+    return String(record?.status || record?.messageStatus || "").toUpperCase() === NOTIFICATION_STATUS.DRAFT;
+}
+
+/** Attachments on a composed message are limited to PDFs and images. */
+export const ATTACHMENT_ACCEPT = ".pdf,.jpg,.jpeg,.png";
+
+const ATTACHMENT_RULES: Record<string, { mediaType: string; maxSize: number }> = {
+    pdf: { mediaType: "DOCUMENT", maxSize: 10 * 1024 * 1024 },
+    jpg: { mediaType: "IMAGE", maxSize: 5 * 1024 * 1024 },
+    jpeg: { mediaType: "IMAGE", maxSize: 5 * 1024 * 1024 },
+    png: { mediaType: "IMAGE", maxSize: 5 * 1024 * 1024 },
+};
+
+/** Checks a picked file against the PDF/image rules and returns the media type to upload it as. */
+export function validateAttachment(file: File): { valid: true; mediaType: string } | { valid: false; message: string } {
+    const ext = (file.name?.split(".").pop() || "").toLowerCase();
+    const rule = ATTACHMENT_RULES[ext];
+    if (!rule) {
+        return { valid: false, message: "Only PDF, JPG, JPEG and PNG files are allowed." };
+    }
+    if (file.size > rule.maxSize) {
+        return { valid: false, message: `File size should not exceed ${rule.maxSize / (1024 * 1024)}MB.` };
+    }
+    return { valid: true, mediaType: rule.mediaType };
+}
+
+export const notificationStatusFilterOptions = [
+    { id: NOTIFICATION_STATUS.SENT, name: "Sent" },
+    { id: NOTIFICATION_STATUS.DRAFT, name: "Draft" },
+];
+
+/** Converts the stored HTML description to plain text for the list preview. */
+export function descriptionToPlainText(html?: string) {
+    const tempElement = document.createElement("div");
+    tempElement.innerHTML = html || "";
+    return (tempElement.textContent || tempElement.innerText || "").replace(/\s+/g, " ").trim();
+}
+
+function truncateChars(text: string, maxChars: number) {
+    if (text.length <= maxChars) return text;
+    return text.slice(0, maxChars).trimEnd() + "…";
+}
+
+export function generateColumns(actionList: Array<IOptionsHrtl>, onViewDescription?: (row: any) => void) {
     return [
         {
             Header: "Title",
@@ -17,18 +67,18 @@ export function generateColumns(actionList: Array<IOptionsHrtl>) {
             disableSortBy: true,
             columnClassName: "max-w-300px min-w-300px",
             Cell: ({ row: { original } }: any) => {
-                const tempElement = document.createElement("div");
-                tempElement.innerHTML = original?.description || "";
-                const plainText =
-                    tempElement.textContent ||
-                    tempElement.innerText ||
-                    "-";
+                const plainText = descriptionToPlainText(original?.description);
+                if (!plainText) return <div className="tw-max-w-[300px]">-</div>;
                 return (
                     <div
-                        className="tw-max-w-[300px] tw-line-clamp-3 tw-break-words"
-                        title={plainText}
+                        role="button"
+                        tabIndex={0}
+                        className="tw-max-w-[300px] tw-whitespace-nowrap tw-cursor-pointer hover:tw-text-primary hover:tw-underline"
+                        title="Click to view full message"
+                        onClick={() => onViewDescription?.(original)}
+                        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onViewDescription?.(original); } }}
                     >
-                        {plainText}
+                        {truncateChars(plainText, DESCRIPTION_PREVIEW_CHARS)}
                     </div>
                 );
             },
@@ -64,13 +114,16 @@ export function generateColumns(actionList: Array<IOptionsHrtl>) {
                 if (!!staffDetails) {
                     senderList.push('Employee')
                 }
-                if (!Array.isArray(senderList)) {
-                    return "-";
-                }
+                const triggerDate = getDateWithTimeFormat(original?.triggerDate ? `${original?.triggerDate}Z` : '');
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>{senderList.map((item, index) => (<div key={`${rowIndex}-${index}`} className="d-flex flex-wrap gap-1">
-                        <span className="badge bg-light text-muted text-uppercase px-2 py-1">{item}</span>
-                    </div>))}</div>
+                    <div>
+                        {senderList.length > 0 ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>{senderList.map((item, index) => (<div key={`${rowIndex}-${index}`} className="d-flex flex-wrap gap-1">
+                                <span className="badge bg-light text-muted text-uppercase px-2 py-1">{item}</span>
+                            </div>))}</div>
+                        ) : "-"}
+                        {!!triggerDate && <div className="text-muted fs-13 text-nowrap mt-1">{triggerDate}</div>}
+                    </div>
                 )
             },
         },
@@ -91,35 +144,33 @@ export function generateColumns(actionList: Array<IOptionsHrtl>) {
             }
         },
         {
-            Header: "Trigger Date",
-            accessor: "triggerDate",
-            disableSortBy: true,
-            columnClassName: "w-200px min-w-200px text-nowrap",
-            Cell: ({ row: { original } }: any) => {
-                return getDateWithTimeFormat(original?.triggerDate ? `${original?.triggerDate}Z` : '');
-            },
-        },
-        {
             Header: "Status",
             accessor: "status",
             disableSortBy: true,
+            // Frozen next to Actions; the right offset matches the Actions column width (100px).
+            columnClassName: "!tw-sticky !tw-right-[100px] !tw-z-10 !tw-bg-gray-100 tw-w-[110px] tw-min-w-[110px] tw-max-w-[110px] tw-text-center",
+            tdClass: "!tw-sticky !tw-right-[100px] !tw-z-10 !tw-bg-white tw-text-center",
             Cell: ({ row: { original } }: any) => {
+                if (isDraftNotification(original)) {
+                    return <StatusLabel type={'pending'} labelName={'Draft'} />;
+                }
                 return (
                     <StatusLabel type={'issued'} labelName={'Sent'} />
                 );
             },
         }
-        // ,
-        // {
-        //     Header: "Action",
-        //     thClass: "w-5",
-        //     disableSortBy: true,
-        //     Cell: ({ row: { original } }: any) => {
-        //         return (
-        //             <MoreActions actionOptions={actionList} rowId={original.id} />
-        //         );
-        //     },
-        // },
+        ,
+        {
+            Header: "Actions",
+            accessor: "actions",
+            disableSortBy: true,
+            // Frozen to the right edge so the actions stay visible while scrolling horizontally.
+            columnClassName: "sticky-right !tw-z-10 !tw-bg-gray-100 tw-w-[100px] tw-min-w-[100px] tw-max-w-[100px] tw-text-center",
+            tdClass: "sticky-right !tw-z-10 tw-text-center",
+            Cell: ({ row: { original } }: any) => (
+                <MenuOptionHrtl actionOptions={actionList} rowId={original.id} className="tw-justify-center tw-gap-2" />
+            ),
+        },
     ];
 }
 
