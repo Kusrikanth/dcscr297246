@@ -4,36 +4,52 @@ import { PlusSignIcon } from "@hugeicons-pro/core-stroke-standard";
 import TableContainer from "../../../Components/Common/TableContainer";
 import Button from "../../../Components/Common/Button";
 import {
-  approvalEmployees,
   generateParticipantColumns,
   IActivityParticipant,
   IApprovalActivity,
+  IApprovalEmployee,
 } from "./helper";
 
 interface IParticipantsEditorProps {
   activity: IApprovalActivity;
+  employees: Array<IApprovalEmployee>;
   onAddParticipant: () => void;
   onChangeParticipant: (
     index: number,
     changes: Partial<IActivityParticipant>
   ) => void;
   onRemoveParticipant: (index: number) => void;
+  onEditClassScope: (index: number) => void;
+  onMoveParticipant: (index: number, direction: "up" | "down") => void;
 }
 
 const ParticipantsEditor: React.FC<IParticipantsEditorProps> = ({
   activity,
+  employees,
   onAddParticipant,
   onChangeParticipant,
   onRemoveParticipant,
+  onEditClassScope,
+  onMoveParticipant,
 }) => {
   const participantColumns = useMemo(
     () =>
       generateParticipantColumns({
         participants: activity.participants,
+        employees,
         onChangeParticipant,
         onRemoveParticipant,
+        onEditClassScope,
+        onMoveParticipant,
       }),
-    [activity.participants, onChangeParticipant, onRemoveParticipant]
+    [
+      activity.participants,
+      employees,
+      onChangeParticipant,
+      onRemoveParticipant,
+      onEditClassScope,
+      onMoveParticipant,
+    ]
   );
 
   return (
@@ -47,7 +63,7 @@ const ParticipantsEditor: React.FC<IParticipantsEditorProps> = ({
           <Button
             variant="hoverInfo"
             onClick={onAddParticipant}
-            disabled={activity.participants.length === approvalEmployees.length}
+            disabled={activity.participants.length === employees.length}
           >
             <HugeiconsIcon icon={PlusSignIcon} size={16} />
             <span>Add person</span>

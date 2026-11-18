@@ -1,147 +1,33 @@
 import React from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Delete02Icon,
-  DragDropVerticalIcon,
-} from "@hugeicons-pro/core-stroke-standard";
+import { Delete02Icon } from "@hugeicons-pro/core-stroke-standard";
 import { CustomSelect, Switch, TextInput } from "../../../Components/Common";
+import {
+  approvalEmployees,
+  getClassScopeLabel,
+  starterActivities,
+  IActivityParticipant,
+  IApprovalActivity,
+  IApprovalEmployee,
+} from "../../../utility/approvalconfigutility";
 
-export interface IApprovalEmployee {
-  id: string;
-  name: string;
-  title: string;
-  department: string;
-}
+export type { IActivityParticipant, IApprovalActivity, IApprovalEmployee };
+export { approvalEmployees, starterActivities };
 
-export interface IActivityParticipant {
-  employeeId: string;
-  department: string;
-  role: "mandatory" | "acknowledgement";
-}
-
-export interface IApprovalActivity {
-  id: string;
-  name: string;
-  description: string;
-  active: boolean;
-  participants: Array<IActivityParticipant>;
-}
-
-export const approvalEmployees: Array<IApprovalEmployee> = [
-  {
-    id: "EMP-1021",
-    name: "Kavitha Rao",
-    title: "Accounts Manager",
-    department: "Accounts",
-  },
-  {
-    id: "EMP-1048",
-    name: "Joseph Mathew",
-    title: "IT Administrator",
-    department: "Information Technology",
-  },
-  {
-    id: "EMP-1002",
-    name: "Dr. Anjali Menon",
-    title: "Principal",
-    department: "School Leadership",
-  },
-  {
-    id: "EMP-1094",
-    name: "Neha Kapoor",
-    title: "Senior Administrator",
-    department: "Administration",
-  },
-  {
-    id: "EMP-1127",
-    name: "Rakesh Iyer",
-    title: "Records Officer",
-    department: "Student Records",
-  },
-  {
-    id: "EMP-1017",
-    name: "Suresh Nair",
-    title: "Finance Controller",
-    department: "Accounts",
-  },
-  {
-    id: "EMP-1086",
-    name: "Preeti Sharma",
-    title: "Admissions Head",
-    department: "Admissions",
-  },
-  {
-    id: "EMP-1142",
-    name: "Manoj Reddy",
-    title: "Admissions Executive",
-    department: "Admissions",
-  },
-];
-
-export const starterActivities: Array<IApprovalActivity> = [
-  {
-    id: "tc-request",
-    name: "TC Request",
-    description: "Transfer certificate issue workflow",
-    active: true,
-    participants: [
-      {
-        employeeId: "EMP-1021",
-        department: "Accounts",
-        role: "mandatory",
-      },
-      {
-        employeeId: "EMP-1048",
-        department: "Information Technology",
-        role: "acknowledgement",
-      },
-      {
-        employeeId: "EMP-1002",
-        department: "Principal",
-        role: "mandatory",
-      },
-      {
-        employeeId: "EMP-1094",
-        department: "Administration",
-        role: "mandatory",
-      },
-      {
-        employeeId: "EMP-1127",
-        department: "Student Records",
-        role: "acknowledgement",
-      },
-    ],
-  },
-  {
-    id: "concession-approval",
-    name: "Concession Approval",
-    description: "Student fee concession approval",
-    active: true,
-    participants: [
-      { employeeId: "EMP-1017", department: "Accounts", role: "mandatory" },
-    ],
-  },
-  {
-    id: "admission-cancellation",
-    name: "Admission Cancellation",
-    description: "Admission withdrawal and account closure",
-    active: true,
-    participants: [
-      { employeeId: "EMP-1017", department: "Accounts", role: "mandatory" },
-      { employeeId: "EMP-1086", department: "Admissions", role: "mandatory" },
-    ],
-  },
-];
-
-export const searchableApprovalEmployees = approvalEmployees.map(
-  (employee) => ({
+export function getSearchableApprovalEmployees(
+  employees: Array<IApprovalEmployee>
+) {
+  return employees.map((employee) => ({
     ...employee,
     searchLabel: `${employee.name} ${employee.id} ${employee.title} ${employee.department}`,
-  })
-);
+  }));
+}
 
-export function findApprovalEmployee(id?: string) {
-  return approvalEmployees.find((employee) => employee.id === id);
+export function findApprovalEmployee(
+  id?: string,
+  employees: Array<IApprovalEmployee> = approvalEmployees
+) {
+  return employees.find((employee) => `${employee.id}` === `${id}`);
 }
 
 export function renderApprovalEmployeeOption(item: IApprovalEmployee) {
@@ -177,18 +63,27 @@ export interface IParticipantColumnHandlers {
     changes: Partial<IActivityParticipant>
   ) => void;
   onRemoveParticipant: (index: number) => void;
+  onEditClassScope: (index: number) => void;
+  onMoveParticipant: (index: number, direction: "up" | "down") => void;
   participants: Array<IActivityParticipant>;
+  employees: Array<IApprovalEmployee>;
 }
 
 export function generateParticipantColumns({
   onChangeParticipant,
   onRemoveParticipant,
+  onEditClassScope,
+  onMoveParticipant,
   participants,
+  employees,
 }: IParticipantColumnHandlers) {
+  const searchableEmployees = getSearchableApprovalEmployees(employees);
+
   function changeEmployeeHndlr(index: number, employeeId: string) {
-    const employee = findApprovalEmployee(employeeId);
+    const employee = findApprovalEmployee(employeeId, employees);
     onChangeParticipant(index, {
       employeeId,
+      employeeName: employee?.name || "",
       department: employee?.department || "",
     });
   }
@@ -200,7 +95,28 @@ export function generateParticipantColumns({
       disableSortBy: true,
       Cell: ({ row: { index } }: any) => (
         <span className="tw-flex tw-items-center tw-gap-1 tw-text-gray-500">
-          <HugeiconsIcon icon={DragDropVerticalIcon} size={16} />
+          <span className="tw-flex tw-flex-col">
+            <button
+              type="button"
+              className="btn btn-sm tw-p-0 tw-leading-none tw-text-gray-500 hover:tw-text-gray-800 disabled:tw-opacity-30"
+              title="Move up"
+              aria-label={`Move approver ${index + 1} up`}
+              disabled={index === 0}
+              onClick={() => onMoveParticipant(index, "up")}
+            >
+              <i className="ri-arrow-up-s-line tw-text-base" />
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm tw-p-0 tw-leading-none tw-text-gray-500 hover:tw-text-gray-800 disabled:tw-opacity-30"
+              title="Move down"
+              aria-label={`Move approver ${index + 1} down`}
+              disabled={index === participants.length - 1}
+              onClick={() => onMoveParticipant(index, "down")}
+            >
+              <i className="ri-arrow-down-s-line tw-text-base" />
+            </button>
+          </span>
           <b>{index + 1}</b>
         </span>
       ),
@@ -210,14 +126,13 @@ export function generateParticipantColumns({
       accessor: "employeeId",
       disableSortBy: true,
       Cell: ({ row: { original, index } }: any) => {
-        const employee = findApprovalEmployee(original?.employeeId);
+        const employee = findApprovalEmployee(original?.employeeId, employees);
         const usedIds = participants
           .filter((_, itemIndex) => itemIndex !== index)
           .map((item) => item.employeeId);
-        const availableEmployees = searchableApprovalEmployees.filter(
+        const availableEmployees = searchableEmployees.filter(
           (item) => !usedIds.includes(item.id)
         );
-
         return (
           <div style={{ minWidth: "16rem" }}>
             <CustomSelect
@@ -238,6 +153,11 @@ export function generateParticipantColumns({
                 ? `${employee.id} · ${employee.department}`
                 : "Start typing to find an employee"}
             </small>
+            {original?.tcRetentionFormEnabled && (
+              <span className="badge bg-info-subtle text-info tw-ms-1">
+                TC Retention Form
+              </span>
+            )}
           </div>
         );
       },
@@ -260,6 +180,36 @@ export function generateParticipantColumns({
           />
         </div>
       ),
+    },
+    {
+      Header: "Class scope",
+      accessor: "applicableClasses",
+      disableSortBy: true,
+      Cell: ({ row: { original, index } }: any) => {
+        const scoped = (original?.applicableClasses || []).length > 0;
+        return (
+          <div style={{ minWidth: "10rem" }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-soft-info"
+              onClick={() => onEditClassScope(index)}
+              title="Edit class scope"
+            >
+              {getClassScopeLabel(original)}
+              <i className="ri-pencil-line tw-ms-1" />
+            </button>
+            <div>
+              <small
+                className={scoped ? "tw-text-orange-600" : "tw-text-gray-500"}
+              >
+                {scoped
+                  ? "Approves only these classes"
+                  : "Approves every class"}
+              </small>
+            </div>
+          </div>
+        );
+      },
     },
     {
       Header: "Requirement",
@@ -301,7 +251,7 @@ export function generateParticipantColumns({
       accessor: "actions",
       disableSortBy: true,
       Cell: ({ row: { original, index } }: any) => {
-        const employee = findApprovalEmployee(original?.employeeId);
+        const employee = findApprovalEmployee(original?.employeeId, employees);
         const labelName = employee
           ? `Delete ${employee.name}`
           : "Delete empty record";

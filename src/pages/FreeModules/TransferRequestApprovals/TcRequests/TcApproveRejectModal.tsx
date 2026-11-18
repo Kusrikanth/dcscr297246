@@ -84,6 +84,12 @@ const TCApproveRejectModal = (props: any) => {
                         </p>
                     )}
 
+                    {props.approverName && (
+                        <p className="tw-text-xs tw-text-gray-400 tw-mb-3">
+                            Acting as approver: <b>{props.approverName}</b> · {props.departmentName}
+                        </p>
+                    )}
+
                     <div className="tw-flex tw-justify-center">
                         <TextArea
                             name="remarks"

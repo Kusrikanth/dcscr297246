@@ -6,7 +6,9 @@ import {
 import { IOptionsHrtl } from "../../../../Components/Common/MenuOptions";
 import { getDdMmYyyyWithMonthNameFormat } from "../../../../utility/dateutility";
 
-export function generateColumns(actionsList: Array<IOptionsHrtl>) {
+export function generateColumns(
+  actionsList: Array<IOptionsHrtl> | ((row: any) => Array<IOptionsHrtl>)
+) {
   return [
     {
       Header: "Student Name",
@@ -94,8 +96,12 @@ export function generateColumns(actionsList: Array<IOptionsHrtl>) {
       filterable: false,
       disableSortBy:true,
       Cell: ({ row: { original } }: any) => {
+        // Approvers can be scoped to specific classes, so the available
+        // actions are resolved per row.
+        const rowActions =
+          typeof actionsList === "function" ? actionsList(original) : actionsList;
         return (
-          <MenuOptionHrtl actionOptions={actionsList} rowId={original.tcRequestId} />
+          <MenuOptionHrtl actionOptions={rowActions} rowId={original.tcRequestId} />
         );
       },
     },

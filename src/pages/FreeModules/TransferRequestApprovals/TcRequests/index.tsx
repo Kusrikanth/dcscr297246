@@ -25,6 +25,11 @@ import ExportModal from "../../../Directory/StudentManagement/ExportModal";
 import Button from "../../../../Components/Common/Button";
 import { downloadExcelFile } from "../../../../utility/commonutility";
 import { useRevertedTcRecords } from "../../../../utility/tcrevertutility";
+import {
+  getLoggedInUserName,
+  getTcApprovalAccess,
+  useApprovalActivities,
+} from "../../../../utility/approvalconfigutility";
 
 const TcRequests = () => {
   const dispatch = useAppDispatch();
@@ -54,16 +59,26 @@ const TcRequests = () => {
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("");
   const revertedTcRecords = useRevertedTcRecords();
   const { currentBranchIdResp: branchId, currentInstIdResp: instituteId,
-    tcRequestList, exportTcRequestListResp, classroomManagmentErrorResp, showApiLoader } =
+    tcRequestList, exportTcRequestListResp, classroomManagmentErrorResp, showApiLoader, userMeResp } =
     useAppSelector(
-      ({ appData, classroomManagmentInfo, globalData }) => ({
+      ({ appData, classroomManagmentInfo, globalData, login }) => ({
         currentBranchIdResp: appData.currentBranchIdResp,
         currentInstIdResp: appData.currentInstIdResp,
         tcRequestList: classroomManagmentInfo.tcRequestList,
         exportTcRequestListResp: classroomManagmentInfo.exportTcRequestListResp,
         showApiLoader: globalData.showApiLoader,
-        classroomManagmentErrorResp: classroomManagmentInfo.classroomManagmentErrorResp
+        classroomManagmentErrorResp: classroomManagmentInfo.classroomManagmentErrorResp,
+        userMeResp: login.userMeResp
       }), shallowEqual);
+
+  // Employee-dependent approval: only employees configured as mandatory approvers
+  // for the TC Request activity (Branch Settings > Approval Configuration) can
+  // approve or cancel; everyone else with screen access is view-only.
+  const approvalActivities = useApprovalActivities();
+  const tcApprovalAccess = useMemo(
+    () => getTcApprovalAccess(approvalActivities, deptName, userMeResp),
+    [approvalActivities, deptName, userMeResp]
+  );
 
   const tcRequestRespRef = useRef({
     prevExportTcRequestListResp: exportTcRequestListResp,
@@ -122,39 +137,41 @@ const TcRequests = () => {
     }
   ];
 
-  const menuOptions = useMemo(() => {
-    if (deptName === "LIBRARY") {
-      return [
-        {
-          id: "view",
-          actionIcon: <HugeiconsIcon icon={Notebook01Icon} className="text-muted" size={18} />,
-          actionName: "View",
-          onClickHndlr: (event: any) => {
-            const tcReqId = event.currentTarget.getAttribute("data-id");
-            const { studentCode, studentName, className, sectionName } = tcRequestList?.content?.find((item: any) => item?.tcRequestId?.toString() === tcReqId) || {};
-            openLibraryTcRequestViewModalHndlr({
-              studentCode, studentName, className, sectionName, tcReqId,
-            });
-          },
-        },
-        ...getActions(openApproveRejModalTcHndlr),
-      ];
-    } else {
-      return [
-        {
-          id: "view",
-          actionIcon: <HugeiconsIcon icon={Notebook01Icon} className="text-muted" size={18} />,
-          actionName: "View",
-          onClickHndlr: (event: any) => {
-            const tcReqId = event.currentTarget.getAttribute("data-id");
-            const { studentId } = tcRequestList?.content?.find((item: any) => item?.tcRequestId?.toString() === tcReqId) || {};
-            openTcRequestViewModalHndlr({ studentId, tcReqId });
-          },
-        },
-        ...getActions(openApproveRejModalTcHndlr),
-      ];
-    }
-  }, [tcRequestList, deptName, openApproveRejModalTcHndlr]);
+  const getRowMenuOptions = useMemo(() => {
+    const approveRejectActions = getActions(openApproveRejModalTcHndlr);
+    const viewAction =
+      deptName === "LIBRARY"
+        ? {
+            id: "view",
+            actionIcon: <HugeiconsIcon icon={Notebook01Icon} className="text-muted" size={18} />,
+            actionName: "View",
+            onClickHndlr: (event: any) => {
+              const tcReqId = event.currentTarget.getAttribute("data-id");
+              const { studentCode, studentName, className, sectionName } = tcRequestList?.content?.find((item: any) => item?.tcRequestId?.toString() === tcReqId) || {};
+              openLibraryTcRequestViewModalHndlr({
+                studentCode, studentName, className, sectionName, tcReqId,
+              });
+            },
+          }
+        : {
+            id: "view",
+            actionIcon: <HugeiconsIcon icon={Notebook01Icon} className="text-muted" size={18} />,
+            actionName: "View",
+            onClickHndlr: (event: any) => {
+              const tcReqId = event.currentTarget.getAttribute("data-id");
+              const { studentId } = tcRequestList?.content?.find((item: any) => item?.tcRequestId?.toString() === tcReqId) || {};
+              openTcRequestViewModalHndlr({ studentId, tcReqId });
+            },
+          };
+    // Approve/Cancel only for requests whose class falls inside the logged-in
+    // approver's class scope (approvers can cover all classes or specific ones).
+    return (row: any) => [
+      viewAction,
+      ...(tcApprovalAccess.canApproveClass(row?.className, row?.curriculumName)
+        ? approveRejectActions
+        : []),
+    ];
+  }, [tcRequestList, deptName, openApproveRejModalTcHndlr, tcApprovalAccess]);
 
 
 
@@ -236,10 +253,50 @@ const TcRequests = () => {
     ];
   }, [TcRequestList, revertedTcRecords, selectedAcademicYearId]);
 
-  const roleColumns = useMemo(() => generateColumns(menuOptions || []), [tcRequestList]);
+  const roleColumns = useMemo(() => generateColumns(getRowMenuOptions), [getRowMenuOptions]);
   return (
     <>
       <div className="tw-inline-block tw-w-full tw-mt-2">
+        {tcApprovalAccess.restricted && (
+          tcApprovalAccess.canApprove ? (
+            <div className="tw-flex tw-items-center tw-gap-2 tw-rounded-md tw-border tw-border-teal-200 tw-bg-teal-50 tw-px-3 tw-py-2 tw-mb-3 tw-text-sm tw-text-teal-800">
+              <HugeiconsIcon icon={CheckmarkCircle03StrokeStandard} size={16} />
+              <span>
+                You are a designated approver for{" "}
+                {deptName === "LIBRARY" ? "Library" : "Accounts"} TC requests
+                {getLoggedInUserName(userMeResp)
+                  ? ` (${getLoggedInUserName(userMeResp)})`
+                  : ""}
+                {tcApprovalAccess.currentApproverClassNames.length
+                  ? ` — limited to classes ${tcApprovalAccess.currentApproverClassNames.join(", ")}; other classes are view-only`
+                  : ""}
+                .
+              </span>
+            </div>
+          ) : tcApprovalAccess.isAcknowledger ? (
+            <div className="tw-flex tw-items-center tw-gap-2 tw-rounded-md tw-border tw-border-blue-200 tw-bg-blue-50 tw-px-3 tw-py-2 tw-mb-3 tw-text-sm tw-text-blue-800">
+              <HugeiconsIcon icon={Notebook01Icon} size={16} />
+              <span>
+                You are an acknowledgement participant for{" "}
+                {deptName === "LIBRARY" ? "Library" : "Accounts"} TC requests —
+                you are kept informed, but requests proceed without your
+                approval. Approvals are made by{" "}
+                <b>{tcApprovalAccess.approverNames.join(", ")}</b>.
+              </span>
+            </div>
+          ) : (
+            <div className="tw-flex tw-items-center tw-gap-2 tw-rounded-md tw-border tw-border-orange-200 tw-bg-orange-50 tw-px-3 tw-py-2 tw-mb-3 tw-text-sm tw-text-orange-800">
+              <HugeiconsIcon icon={CancelCircleIcon} size={16} />
+              <span>
+                View-only access: TC requests for{" "}
+                {deptName === "LIBRARY" ? "Library" : "Accounts"} can only be
+                approved by{" "}
+                <b>{tcApprovalAccess.approverNames.join(", ")}</b> (configured
+                under Branch Settings &gt; Approval Configuration).
+              </span>
+            </div>
+          )
+        )}
         <div className="tw-grid tw-grid-cols-12 tw-gap-4">
           <div className="tw-col-span-12 md:tw-col-span-11">
             <TcFilters
@@ -288,6 +345,11 @@ const TcRequests = () => {
           requestType={approveRejTcModalState?.modalData?.requestType}
           tcReqId={approveRejTcModalState?.modalData?.tcReqId}
           departmentName={deptName}
+          approverName={
+            tcApprovalAccess.restricted
+              ? getLoggedInUserName(userMeResp)
+              : ""
+          }
           toggle={toggleApproveRejModal}
         />
       </ModalContainerUpdated>
